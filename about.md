@@ -2,10 +2,16 @@
 layout: page
 title: About
 permalink: /about/
+tags:
+- creepy photos
 ---
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](http://jekyllrb.com/)
+My name is Jeff Smits. I'm a Computer Science student at Delft
+University of Technology.  
+I like too many things about Computer Science. Right now I'm
+specialising in programming languages related things (PL).  
+Here's a picture of me from November 2013:
 
-You can find the source code for the Jekyll new theme at: [github.com/jglovier/jekyll-new](https://github.com/jglovier/jekyll-new)
+![screengrab from Elm Workshop 2013 presentation]({{url}}/images/me-2013.jpg)
 
-You can find the source code for Jekyll at [github.com/jekyll/jekyll](https://github.com/jekyll/jekyll)
+That's all for now, stop being nosy!
