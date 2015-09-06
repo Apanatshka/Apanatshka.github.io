@@ -6,7 +6,7 @@ category: meta
 tags: planning
 ---
 Allo world. It is I, LeClerc.  
-Yeah, that was bad. Ok, let's not do bad puns. I'll try to stay serious
+Yeah, that was bad. Ok, let's not do bad jokes. I'll try to stay serious
 here. *Puts on serious face.*
 
 So here's the deal: I'll write about some CS related things that I know.
@@ -28,4 +28,4 @@ Here's my planning for now:
  - Get side-tracked by other stuff.. Wait no, I was going to try to
    avoid that! Aargh..
 
-(Maybe I should reconsider the "no bad puns"?)
+(Maybe I should reconsider the "no bad jokes"?)
