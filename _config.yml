@@ -5,8 +5,9 @@ description: > # this means to ignore newlines until "baseurl:"
   A web log. Mostly about computer science-y stuff. 
 baseurl: "" # the subpath of your site, e.g. /blog/
 url: "http://Apanatshka.github.io" # the base hostname & protocol for your site
-# twitter_username: jekyllrb
-github_username:  Apanatshka
+permalink: pretty
+# twitter_username: Apanatshka
+github_username: Apanatshka
 
 # Build settings
 markdown: kramdown
