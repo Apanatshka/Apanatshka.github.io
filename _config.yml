@@ -11,3 +11,10 @@ github_username: Apanatshka
 
 # Build settings
 markdown: kramdown
+highlighter: rouge
+
+kramdown:
+  input: GFM
+
+katex:
+  path_to_js: "./_assets/katex.min.js"
