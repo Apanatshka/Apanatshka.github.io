@@ -6,111 +6,31 @@ category: CompSci
 tags:     [theory, basics, automata, computation]
 ---
 
-What do Turing machines and regular expressions have in common? One is a theoretical model of a computer, and can be used to prove that some things cannot be computed. The other is a practical tool for matching strings. And yet they are both based on a simpler "computational model": a (very constrained) finite state machine (FSM). 
+What do Turing machines and regular expressions have in common? One is a theoretical model of a computer, and can be used to prove that some things cannot be computed. The other is a practical tool for matching strings. And yet they are both based on a simpler 'computational model': a (very constrained) finite state machine (FSM). 
 
-In this blog post I'll go over the basics of this type of FSM and instead of going over proofs, we'll go over examples and little implementations in Rust. For more information about this blog post series, see [this announcement post]({% post_url 2016-03-28-theory-of-computation %}). 
+In this blog post we'll go over the basics of this type of FSM and instead of going over proofs, we'll go over examples and little implementations in Rust. For more information about this blog post series, see [this announcement post]({% post_url 2016-03-28-theory-of-computation %}). 
 
 # An exercise in minimalism
+
+We'll start with the simplest, most restricted version of our FSMs. These are great for proofs because everything explicitly defined and super simple. But they are not so great to construct by hand, so we'll discuss a nicer version afterwards and relate that to regular expressions. 
 
 ## Deterministic Finite Automaton (DFA)
-  * Finite input, boolean output
-  * Description of the machine with a Finite State Machine (FSM)
-  * binary_string example
-  * No variable memory, all memory statically encoded in states
-  * exponential_blowup example
 
-## Non-deterministic Finite Automaton (NFA)
-  * Easier definition
-  * not_exponential example
-  * Equally powerful by translating to DFA (with possible exponential blowup)
-  * Powerset algorithm
-  * Operators
-    * Concatenate
-    * Options (union)
-    * Kleene star
-  * Limitations and Nonregular languages
-    * Pumping lemma
-    * Variable memory, though limited. Left for next blog post
+DFAs are FSMs (*automata*) that work on a *finite* input and give a boolean output. *True* means the input was recognised as part of the 'language' that the DFA encodes, *false* means it is not part of the language. *Deterministic* automata define all their (*finite* amount of) states and *exactly one* transition for every possible pair of state and input. 
+The way you formally describe a DFA is by defining:
 
+1. the *states*, 
+2. allowable input symbols (or *alphabet*), 
+3. the *state transitions* (as a finite function), 
+4. the *start state* and
+5. the *final* or *accept states*.
 
+### Example: Binary string
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# OLD
-
-Ever heard of [regular expressions](http://www.regular-expressions.info/) (regex)? I bet you have. They're a really handy programming tool for matching text, and even replacing it. But if you try to do too much with it at once (like, say, parsing a programming language) it gets really hairy, really quickly. All those lookaheads and lookbehinds and groups, smh. 
-
-Did you know that regex in programming are usually more powerful than the original definition of the regular expression? Those powerful regular expressions are not really true to the word *regular* anymore. 
-
-In this post I'll go into regular expressions and regular languages as they are defined in theoretical computer science. But to keep things interesting and understandable I'll give you runnable code snippets along the way. See [this announcement]({% post_url 2016-03-28-theory-of-computation %}) for more info on this series of posts, including a book I use for reference and the choice of programming language for the snippets.
-
-# An exercise in minimalism
-
-To see where regular expressions come from, let's look at a very minimal computer. We're going to look at *deterministic finite automata* (DFAs), which are simple state machines. 
-
-## Finite
-
-These DFAs take a single input string, which is finite. They have a finite number of states. They have a finite set of input symbols that they recognise. That's where the *finite* in DFA comes from, and it's all very explicitly mentioned so you can use these DFAs in proofs. *Whatever*, let's do something real with them instead! Let me just quickly finish the "what's with this long name" part. 
-
-## Deterministic
-
-Determinism means that the state machine know exactly what to do with every input in every state, and that there is only one possible thing to do. Ok, maybe that's too vague. Don't worry too much about it. It'll become clearer when we compare these DFAs with NFAs (*Non*-deterministic finite automata). 
-
-### Mathematical notation
-
-A DFA definition consists of five parts, of which we have four in our example:
-
-1. A set {% latex %}Q{% endlatex %} of *states*:
-  {% latex %}\{\text{closed}, \text{open}\}{% endlatex %}
-2. A set {% latex %}\Sigma{% endlatex %} of input symbols, this is called the *alphabet*:
-  {% latex %}\{\text{FRONT}, \text{BACK}, \text{BOTH}, \text{NEITHER}\}{% endlatex %}
-3. A function {% latex %}\delta{% endlatex %}, the *transition function*:
-  This function is based on the arrows in the figure and the entries look like this: {% latex %}(\text{closed}, \text{FRONT}) \mapsto \text{open}{% endlatex %}. 
-  Alternatively, you can put it in a table, with 'departure states' on the rows, inputs on the columns, and 'destination states' in the cells. 
-4. A state {% latex %}q_0{% endlatex %}, the *start state*:
-  {% latex %}\text{closed}{% endlatex %}
-5. Crap, the example doesn't have this. Ok, ummm, we'll get to this part later in the post. 
-
-## Output
-
-The wonky part of the magic door example is that we don't really have a finite input. Unless the door is destroyed, there is no obvious end, and therefore no definitive output. What you see in the code instead is that we observe the system and it's transitions. This is a traditional way to use a state machine in a large codebase as a kind of architectural pattern. But it's not what DFAs (or regular expressions for that matter) do. 
-
-The simplest output is a simple "Yes" of "No". This is the fifth part of a DFA, and it works by marking some states as *accept states* ({% latex %}F{% endlatex %}, sometimes called *final states*). When the input ends, if the DFA is in an accept state, the output is "Yes" or "Accepted" or however you want to read it. In the other case the output is obviously "No". 
-
-### Binary string
-
-Let's construct a DFA that can recognise inputs that start with a one, has at least two zeroes after that, and then at least one more one. 
+Let's construct a DFA that can recognise inputs that start with a one, has at least two zeroes after that, and then at least one more one, after which the 'word' ends. 
 
 {% digraph Binary string DFA %}
+bgcolor="transparent";
 rankdir=LR;
 node [shape=circle, fixedsize=shape, width=0.5];
 start [shape=none, label="", width=0];
@@ -128,11 +48,83 @@ Note here that I've already started cheating with the construction of this DFA. 
 
 ### Code code code
 
-In Rust we can do the partial definition of the DFA with an `Option` type. 
+In Rust we can do the partial definition of the DFA with an `Option` type:
 
 ```rust
 {% include {{page.id}}/binary_string/src/main.rs %}
 ```
 
-The transition function now returns an `Option<State>`, so `None` is the stuck state and the 'real' states are wrapped in a `Some`. The state in `main` is now wrapped in an `Option` too. And we just use `and_then` to apply the transition function to the state :)  
-After the loop we now have a check to see if the state is in the final states. I wonder if it can be written in a shorter way... Either way, it's still pretty neat to use the library functions and handle these `Option`s fairly easily. 
+So `None` is the stuck state and the 'real' states are wrapped in a `Some`. 
+
+### Memory
+
+Note that DFAs are so restricted that they don't really have mutable memory. Any kind of memory of what you've already seen of the input needs to be statically encoded in the states of the state machine. This can get a little awkward when you want to recognise binary strings that have a 1 as the second to last symbol:
+
+{% digraph Binary string DFA %}
+layout="circo";
+bgcolor="transparent";
+rankdir=LR;
+start [shape=none, label="", width=0];
+node [shape=doublecircle, fixedsize=shape, width=0.4, mindist=2];
+q100 [label="100"];
+q101 [label="101"];
+q110 [label="110"];
+q111 [label="111"];
+node [shape=circle, fixedsize=shape, width=0.5];
+q000 [label="000"];
+q001 [label="001"];
+q010 [label="010"];
+q011 [label="011"];
+start -> q000;
+q000 -> q000 [label="0"];
+q000 -> q001 [label="1"];
+q001 -> q010 [label="0"];
+q001 -> q011 [label="1"];
+q010 -> q100 [label="0"];
+q010 -> q101 [label="1"];
+q011 -> q110 [label="0"];
+q011 -> q111 [label="1"];
+q100 -> q000 [label="0"];
+q100 -> q001 [label="1"];
+q101 -> q010 [label="0"];
+q101 -> q011 [label="1"];
+q110 -> q100 [label="0"];
+q110 -> q101 [label="1"];
+q111 -> q110 [label="0"];
+q111 -> q111 [label="1"];
+{% enddigraph %}
+
+We remember the last three input symbols in our states, which gives us {%latex%}2^3{%endlatex%} states. An exponential relation, that's not good for practical use, nor for designing these DFAs. 
+
+## Nondeterministic Finite Automaton (NFA)
+
+Nondeterminism allow states to have however many transitions per symbol that it wants. Basically that means that when you simulate such an NFA, you can be in multiple states at once. This allows us to avoid the exponential blowup of the last example:
+
+{% digraph Binary string DFA %}
+bgcolor="transparent";
+rankdir=LR;
+start [shape=none, label="", width=0];
+node [shape=doublecircle, fixedsize=shape, width=0.4, mindist=2];
+q4 [label="1.."];
+node [shape=circle, fixedsize=shape, width=0.5];
+q1 [label="..."];
+q2 [label="..1"];
+q3 [label=".1."];
+start -> q1;
+q1 -> q1 [label="0,1"];
+q1 -> q2 [label="1"];
+q2 -> q3 [label="0,1"];
+q3 -> q4 [label="0,1"];
+{% enddigraph %}
+
+Although this NFA is easier to describe, it's still always translatable to a DFA. This translation algorithm is called powerset construction or subset construction. The powerset of a set is the set of all combinations: {%latex%}\mathbb{P}(\{0,1\}) = \{\emptyset, \{0\}, \{1\}, \{0,1\}\}{%endlatex%} 
+
+The powerset algorithm uses the powerset of the states of the NFA to create the states for the DFA. That's where the exponential blowup comes from, **if** all those states are used. The state with the {%latex%}\emptyset{%endlatex%} is the *stuck state* that we already saw earlier. The start state is still the same although now called {%latex%}\{q_o\}{%endlatex%} instead of {%latex%}q_o{%endlatex%}. The final states are every state that has an NFA final state in its set. 
+
+* Operators
+  * Concatenate
+  * Options (union)
+  * Kleene star
+* Limitations and Nonregular languages
+  * Pumping lemma
+  * Variable memory, though limited. Left for next blog post
