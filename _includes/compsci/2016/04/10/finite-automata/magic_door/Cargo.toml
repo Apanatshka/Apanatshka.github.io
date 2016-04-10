@@ -1,0 +1,6 @@
+[package]
+name = "magic_door"
+version = "0.1.0"
+authors = ["Jeff Smits <jeff.smits@gmail.com>"]
+
+[dependencies]
