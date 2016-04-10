@@ -19,11 +19,11 @@ We'll start with the simplest, most restricted version of our FSMs. These are gr
 DFAs are FSMs (*automata*) that work on a *finite* input and give a boolean output. *True* means the input was recognised as part of the 'language' that the DFA encodes, *false* means it is not part of the language. *Deterministic* automata define all their (*finite* amount of) states and *exactly one* transition for every possible pair of state and input. 
 The way you formally describe a DFA is by defining:
 
-1. the allowable input symbols (or *alphabet* {%latex%}\Sigma{%endlatex%}), 
-2. the *states* {%latex%}Q{%endlatex%}, 
-3. the *state transitions* (as a finite mapping {%latex%}\delta{%endlatex%}), 
-4. the *start state* {%latex%}q_0{%endlatex%} and
-5. the *final* or *accept states* {%latex%}F{%endlatex%}.
+1. the allowable input symbols (or *alphabet* $$\Sigma$$), 
+2. the *states* $$Q$$, 
+3. the *state transitions* (as a finite mapping $$\delta$$), 
+4. the *start state* $$q_0$$ and
+5. the *final* or *accept states* $$F$$.
 
 ### Example: Binary string
 
@@ -95,7 +95,7 @@ q111 -> q110 [label="0"];
 q111 -> q111 [label="1"];
 {% enddigraph %}
 
-We remember the last three input symbols in our states. That gives us {%latex%}2^3{%endlatex%} states, an exponential relation. So with these kinds of problems, you really don't want to design these DFAs by hand. 
+We remember the last three input symbols in our states. That gives us $$2^3$$ states, an exponential relation. So with these kinds of problems, you really don't want to design these DFAs by hand. 
 
 ## Non-deterministic Finite Automaton (NFA)
 
@@ -118,32 +118,32 @@ q2 -> q3 [label="0,1"];
 q3 -> q4 [label="0,1"];
 {% enddigraph %}
 
-Although this NFA is easier to describe, it's still always translatable to a DFA. This translation algorithm is called powerset construction or subset construction. The powerset of a set is the set of all combinations: {%latex%}\mathbb{P}(\{0,1\}) = \{\emptyset, \{0\}, \{1\}, \{0,1\}\}{%endlatex%} 
+Although this NFA is easier to describe, it's still always translatable to a DFA. This translation algorithm is called powerset construction or subset construction. The powerset of a set is the set of all combinations: $$\mathbb{P}(\{0,1\}) = \{\emptyset, \{0\}, \{1\}, \{0,1\}\}$$. 
 
 ### Powerset construction
 
 1. The *alphabet* stays the same.
-2. We use the powerset of the states of the NFA to create the states for the DFA. (That's where the exponential blowup comes from, **if** all those states are used.) The state with the {%latex%}\emptyset{%endlatex%} is the *stuck state* that we already saw earlier. 
-3. The transitions are based on the simulation of the NFA. So if you are in {%latex%}\{q_o, q_1, q_3\}{%endlatex%} then the transition with symbol {%latex%}\sigma_2{%endlatex%} takes you to the state in the DFA that is labelled with states of the NFA that are reachable with {%latex%}\sigma_2{%endlatex%} from the states {%latex%}q_o{%endlatex%}, {%latex%}q_1{%endlatex%} and {%latex%}q_3{%endlatex%}. 
-4. The start state is still the same although now called {%latex%}\{q_o\}{%endlatex%} instead of {%latex%}q_o{%endlatex%}. 
+2. We use the powerset of the states of the NFA to create the states for the DFA. (That's where the exponential blowup comes from, **if** all those states are used.) The state with the $$\emptyset$$ is the *stuck state* that we already saw earlier. 
+3. The transitions are based on the simulation of the NFA. So if you are in $$\{q_o, q_1, q_3\}$$ then the transition with symbol $$\sigma_2$$ takes you to the state in the DFA that is labelled with states of the NFA that are reachable with $$\sigma_2$$ from the states $$q_o$$, $$q_1$$ and $$q_3$$. 
+4. The start state is still the same although now called $$\{q_o\}$$ instead of $$q_o$$. 
 5. The final states are every state that has an NFA final state in its set. 
 
 ### Epsilon moves
 
-The empty string is referred to with the greek letter {%latex%}\varepsilon{%endlatex%}. If you allow transitions in an NFA to be labelled with {%latex%}\varepsilon{%endlatex%}, you get the NFA-{%latex%}\varepsilon{%endlatex%} type of automata. This changes the powerset construction slightly, because an {%latex%}\varepsilon{%endlatex%} move from the start state in the NFA {%latex%}q_0{%endlatex%} means that the start state of the DFA will be one of the compound states {%latex%}\{q_0, ...\}{%endlatex%}. This class of automata is still not more powerful than the NFA or DFA. But it *is* useful for the definition of the basic regular expression operators.
+The empty string is referred to with the greek letter $$\varepsilon$$. If you allow transitions in an NFA to be labelled with $$\varepsilon$$, you get the NFA-$$\varepsilon$$ type of automata. This changes the powerset construction slightly, because an $$\varepsilon$$ move from the start state in the NFA $$q_0$$ means that the start state of the DFA will be one of the compound states $$\{q_0, ...\}$$. This class of automata is still not more powerful than the NFA or DFA. But it *is* useful for the definition of the basic regular expression operators.
 
 ### Regular expressions
 
 Now just to warn you: regular expressions in programming were once based on this automata theory, but have since been made much more powerful. Regex can describe much more than just *regular* languages. 
 
-**The basics** Ok, say you have an empty regular expression. That's an NFA with one state, the start state, which is also a final state. It only recognises {%latex%}\varepsilon{%endlatex%}. 
+**The basics** Ok, say you have an empty regular expression. That's an NFA with one state, the start state, which is also a final state. It only recognises $$\varepsilon$$. 
 A regular expression that matches exactly `1` is the same as an NFA with two states, the start state, and a separate final state with a transition in between labelled with `1`. 
 
-**Option** Let's take two regular expressions put an 'or' (`|`) in between. If either one matches, the whole regex matches. If we have two NFA equivalents, we can make a new start state and {%latex%}\varepsilon{%endlatex%}-transitions to the two old start states. 
+**Option** Let's take two regular expressions put an 'or' (`|`) in between. If either one matches, the whole regex matches. If we have two NFA equivalents, we can make a new start state and $$\varepsilon$$-transitions to the two old start states. 
 
-**Concatenation** Let's take two regular expressions and stick them together, one after the other. In NFA-land that means that the final states of the first NFA become normal states with {%latex%}\varepsilon{%endlatex%}-transitions to the start state of the second NFA. 
+**Concatenation** Let's take two regular expressions and stick them together, one after the other. In NFA-land that means that the final states of the first NFA become normal states with $$\varepsilon$$-transitions to the start state of the second NFA. 
 
-**Kleene Star** This is the `*` in a regular expression, a zero-or-more. With this and the option, you can make a one-or-more (`+`). The way this works in NFA-land is as follows: Create a new start state, which is a final state, and give it an {%latex%}\varepsilon{%endlatex%}-transition to the old start state (the zero part). Give the old final states {%latex%}\varepsilon{%endlatex%}-transitions to the old start state (the more part). 
+**Kleene Star** This is the `*` in a regular expression, a zero-or-more. With this and the option, you can make a one-or-more (`+`). The way this works in NFA-land is as follows: Create a new start state, which is a final state, and give it an $$\varepsilon$$-transition to the old start state (the zero part). Give the old final states $$\varepsilon$$-transitions to the old start state (the more part). 
 
 ### Limitations and Non-regular languages
 
