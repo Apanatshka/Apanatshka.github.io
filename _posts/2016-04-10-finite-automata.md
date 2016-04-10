@@ -29,20 +29,7 @@ The way you formally describe a DFA is by defining:
 
 Let's construct a DFA that can recognise inputs that start with a one, has at least two zeroes after that, and then at least one more one, after which the 'word' ends. 
 
-{% digraph Binary string DFA %}
-bgcolor="transparent";
-rankdir=LR;
-node [shape=circle, fixedsize=shape, width=0.5];
-start [shape=none, label="", width=0];
-q4 [shape=doublecircle, width=0.4];
-start -> q0;
-q0 -> q1 [label="1"];
-q1 -> q2 [label="0"];
-q2 -> q3 [label="0"];
-q3 -> q3 [label="0"];
-q3 -> q4 [label="1"];
-q4 -> q4 [label="1"];
-{% enddigraph %}
+{% include {{page.id}}/images/binary_string.svg %}
 
 Note that I've already started cheating with the construction of this DFA. Not every state handles all symbols in the alphabet (0 and 1). This partially defined DFA is usually easier to write and read. The usual way to make it fully defined is to add an explicit *stuck state*. All the unhandled symbols go to that state, and with any next input the DFA will stay in that state. 
 
@@ -61,39 +48,7 @@ So `None` is the stuck state and the 'real' states are wrapped in a `Some`. In t
 
 Note that DFAs are so restricted that they don't really have mutable memory. Any kind of memory of what you've already seen of the input needs to be statically encoded in the states of the state machine. This can get a little awkward when you want to recognise binary strings that have a 1 as the second to last symbol:
 
-{% digraph Binary string DFA %}
-layout="circo";
-bgcolor="transparent";
-rankdir=LR;
-start [shape=none, label="", width=0];
-node [shape=doublecircle, fixedsize=shape, width=0.4, mindist=2];
-q100 [label="100"];
-q101 [label="101"];
-q110 [label="110"];
-q111 [label="111"];
-node [shape=circle, fixedsize=shape, width=0.5];
-q000 [label="000"];
-q001 [label="001"];
-q010 [label="010"];
-q011 [label="011"];
-start -> q000;
-q000 -> q000 [label="0"];
-q000 -> q001 [label="1"];
-q001 -> q010 [label="0"];
-q001 -> q011 [label="1"];
-q010 -> q100 [label="0"];
-q010 -> q101 [label="1"];
-q011 -> q110 [label="0"];
-q011 -> q111 [label="1"];
-q100 -> q000 [label="0"];
-q100 -> q001 [label="1"];
-q101 -> q010 [label="0"];
-q101 -> q011 [label="1"];
-q110 -> q100 [label="0"];
-q110 -> q101 [label="1"];
-q111 -> q110 [label="0"];
-q111 -> q111 [label="1"];
-{% enddigraph %}
+{% include {{page.id}}/images/exponential_blowup.svg %}
 
 We remember the last three input symbols in our states. That gives us $$2^3$$ states, an exponential relation. So with these kinds of problems, you really don't want to design these DFAs by hand. 
 
@@ -101,22 +56,7 @@ We remember the last three input symbols in our states. That gives us $$2^3$$ st
 
 Non-determinism allows states to have multiple transitions per symbol. That means that when you simulate an NFA, you can be in multiple states at once. This allows us to avoid the exponential blowup of the last example:
 
-{% digraph Binary string DFA %}
-bgcolor="transparent";
-rankdir=LR;
-start [shape=none, label="", width=0];
-node [shape=doublecircle, fixedsize=shape, width=0.4, mindist=2];
-q4 [label="1.."];
-node [shape=circle, fixedsize=shape, width=0.5];
-q1 [label="..."];
-q2 [label="..1"];
-q3 [label=".1."];
-start -> q1;
-q1 -> q1 [label="0,1"];
-q1 -> q2 [label="1"];
-q2 -> q3 [label="0,1"];
-q3 -> q4 [label="0,1"];
-{% enddigraph %}
+{% include {{page.id}}/images/nfa.svg %}
 
 Although this NFA is easier to describe, it's still always translatable to a DFA. This translation algorithm is called powerset construction or subset construction. The powerset of a set is the set of all combinations: $$\mathbb{P}(\{0,1\}) = \{\emptyset, \{0\}, \{1\}, \{0,1\}\}$$. 
 
