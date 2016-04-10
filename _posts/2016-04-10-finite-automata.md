@@ -54,6 +54,7 @@ In Rust we can do the partial definition of the DFA with an `Option` type:
 {% include {{page.id}}/binary_string/src/main.rs %}
 ```
 
+(The crate is in this [blog's repository](https://github.com/Apanatshka/Apanatshka.github.io/tree/master/_includes{{page.id}}/binary_string/))
 So `None` is the stuck state and the 'real' states are wrapped in a `Some`. In this code the transitions are given as a function, not a mapping. When you generalise this into an automaton library (there [are](https://crates.io/search?q=automaton) [several](https://crates.io/search?q=automata) on [crates.io](https://crates.io/)), you're more likely to end up with a map. 
 
 ### Memory
