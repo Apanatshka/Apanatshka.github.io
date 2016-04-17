@@ -41,10 +41,10 @@ namespace :git do
     system "git checkout #{DEPLOY_BRANCH}"
 
     puts "Copying #{DESTINATION_FOLDER} to root"
-    system "cp -r #{DESTINATION_FOLDER}/* . && rm -rf #{DESTINATION_FOLDER}" 
+    system "cp -r #{DESTINATION_FOLDER}/* ." 
 
-    puts "Adding .nojekyll to root"
-    system "touch .nojekyll"
+    # puts "Adding .nojekyll to root"
+    # system "touch .nojekyll"
 
     unless git_clean?
       puts "Pushing to #{DEPLOY_BRANCH}."
