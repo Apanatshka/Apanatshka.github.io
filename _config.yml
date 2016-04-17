@@ -12,6 +12,7 @@ github_username: Apanatshka
 # Build settings
 markdown: kramdown
 highlighter: rouge
+exclude: [Gemfile, Gemfile.lock, Rakefile, README, bin]
 
 kramdown:
   input: GFM
