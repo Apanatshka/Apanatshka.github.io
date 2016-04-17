@@ -65,7 +65,9 @@
   </header>
 
   <article class="post-content">
-    <p>What do Turing machines and regular expressions have in common? One is a theoretical model of a computer, and can be used to prove that some things cannot be computed. The other is a practical tool for matching strings. And yet they are both based on a simple <em>computational model</em>: a (very constrained) finite state machine (FSM).</p>
+    <p><a href="#addendum"><em>Edited on: Apr 17, 2016</em></a></p>
+
+<p>What do Turing machines and regular expressions have in common? One is a theoretical model of a computer, and can be used to prove that some things cannot be computed. The other is a practical tool for matching strings. And yet they are both based on a simple <em>computational model</em>: a (very constrained) finite state machine (FSM).</p>
 
 <p>In this blog post we’ll go over the basics of this type of FSM and instead of going over proofs, we’ll go over examples and little implementations in Rust. For more information about this blog post series, see <a href="/compsci/2016/03/28/theory-of-computation/">this announcement post</a>.</p>
 
@@ -554,17 +556,43 @@ A regular expression that matches exactly <code class="highlighter-rouge">1</cod
 
 <p><strong>Kleene Star</strong> This is the <code class="highlighter-rouge">*</code> in a regular expression, a zero-or-more. With this and the option, you can make a one-or-more (<code class="highlighter-rouge">+</code>). The way this works in NFA-land is as follows: Create a new start state, which is a final state, and give it an <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>-transition to the old start state (the zero part). Give the old final states <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>-transitions to the old start state (the more part).</p>
 
-<h3 id="limitations-and-non-regular-languages">Limitations and Non-regular languages</h3>
+<h2 id="limitations-and-non-regular-languages">Limitations and Non-regular languages</h2>
 
 <p>Say you want to recognise binary strings that starts with any number of zeroes, but then is followed by an equal number of ones. Because the number of zeroes is unbounded, we cannot use a finite number of states to count how many zeroes we’ve seen so far, to match with the amount of ones to come. Basically, it’s impossible to use DFAs or NFAs to recognise ‘words’ of this language.</p>
 
-<p>More generally you can prove languages non-regular with the <a href="https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages">pumping lemma for regular languages</a>. I don’t have a super-intuitive way of explaining the pumping lemma, so if you want to know more, try reading the theory on it.</p>
+<p>More generally you can prove languages non-regular with the <a href="https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages">pumping lemma for regular languages</a>. I don’t have a super-intuitive way of explaining the pumping lemma, so if you want to know more, try reading the theory on it. <em>(Or do I? See the <a href="#addendum">Addendum</a>!)</em></p>
 
 <h1 id="ps">P.S.</h1>
 
 <p>Next blog post we’ll look at context-free languages, which is a superset of the regular languages. They can be described with context-free grammars (which you may know from the definitions of programming language syntax) and which you can recognise with an automaton that has a single stack for memory.</p>
 
 <p>I was going to write some more Rust code for you to look at, like a generally usable automaton library and the powerset construction. But this post has taken so long, it is already long, and there are Rust crates available with that kind of stuff… So, whatever ¯\_(ツ)_/¯</p>
+
+<hr />
+
+<hr />
+
+<h1 id="addendum">Addendum</h1>
+
+<p><em>Apr 17, 2016</em></p>
+
+<h2 id="non-regularity-and-the-pumping-lemma">Non-regularity and the pumping lemma</h2>
+
+<p>Most of the examples I’ve seen of non-regular languages have some form of unbounded counting in them. But if you have a different language that doesn’t seem to fit, you can try to prove it non-regular too. The usual way to prove that a language is not regular, is to show that the <a href="https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages">pumping lemma for regular languages</a> doesn’t hold for the language. The pumping lemma is a property that all regular languages have (though there are some non-regular languages which are have this property). The basic idea is this:</p>
+
+<ol>
+  <li>Your language either consists of a finite set of words, and is therefore regular, or it consists of an infinite set. (The finite set means you can just union the DFAs for every separate word. )</li>
+  <li>With an infinite set of words, and a finite alphabet, you’ll have words that have more symbols in them than your language’s DFA has states. That means the DFA has to loop somewhere.</li>
+  <li>Every word in your language that is longer and uses a loop has three parts: the part before the loop, the part in the loop and the part after the loop. Such a word is part of an infinite class of words where you can repeat the middle part however many times you like.</li>
+</ol>
+
+<p>To prove that a language doesn’t have this <em>pumping length</em> from the lemma, you need to be pretty abstract and use a cleverly chosen word. So if you want to write such a proof and haven’t done it before, I advise you to look up some examples!</p>
+
+<p><em>Thanks to <a href="https://www.reddit.com/user/so_you_like_donuts">/u/so_you_like_donuts</a> for giving an <a href="https://www.reddit.com/r/rust/comments/4eq01l/my_first_blog_post_finite_automata_with_a_bit_of/d22bw6q?context=3">intuitive description of the pumping lemma</a> which drove me to write this addendum.</em></p>
+
+<h2 id="next-post">Next post</h2>
+
+<p>I had another week to read other blog posts, including an excellent one about <a href="http://blog.burntsushi.net/transducers/">automata in rust for string indexes</a> and now I feel bad for not giving you the Rust code for every algorithm I explained. So, I might just postpone the blog post about context-free languages and dive into regex first. I doubt I’ll do better than the existing <a href="https://crates.io/crates/regex">regex crate</a>, but, you know, whatever ¯\_(ツ)_/¯</p>
 
   </article>
 

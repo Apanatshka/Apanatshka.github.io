@@ -6,8 +6,8 @@
 </description>
     <link>http://Apanatshka.github.io/</link>
     <atom:link href="http://Apanatshka.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sun, 17 Apr 2016 18:26:37 +0200</pubDate>
-    <lastBuildDate>Sun, 17 Apr 2016 18:26:37 +0200</lastBuildDate>
+    <pubDate>Sun, 17 Apr 2016 19:11:58 +0200</pubDate>
+    <lastBuildDate>Sun, 17 Apr 2016 19:11:58 +0200</lastBuildDate>
     <generator>Jekyll v3.0.3</generator>
     
       <item>
@@ -501,7 +501,7 @@ A regular expression that matches exactly &lt;code class=&quot;highlighter-rouge
 
 &lt;p&gt;&lt;strong&gt;Kleene Star&lt;/strong&gt; This is the &lt;code class=&quot;highlighter-rouge&quot;&gt;*&lt;/code&gt; in a regular expression, a zero-or-more. With this and the option, you can make a one-or-more (&lt;code class=&quot;highlighter-rouge&quot;&gt;+&lt;/code&gt;). The way this works in NFA-land is as follows: Create a new start state, which is a final state, and give it an &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;-transition to the old start state (the zero part). Give the old final states &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;-transitions to the old start state (the more part).&lt;/p&gt;
 
-&lt;h3 id=&quot;limitations-and-non-regular-languages&quot;&gt;Limitations and Non-regular languages&lt;/h3&gt;
+&lt;h2 id=&quot;limitations-and-non-regular-languages&quot;&gt;Limitations and Non-regular languages&lt;/h2&gt;
 
 &lt;p&gt;Say you want to recognise binary strings that starts with any number of zeroes, but then is followed by an equal number of ones. Because the number of zeroes is unbounded, we cannot use a finite number of states to count how many zeroes we’ve seen so far, to match with the amount of ones to come. Basically, it’s impossible to use DFAs or NFAs to recognise ‘words’ of this language.&lt;/p&gt;
 
