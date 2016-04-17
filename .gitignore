@@ -1,6 +1,5 @@
-_site
-_bin
+_site/
+_bin/
 .sass-cache
-bin/
 .bundle/
 .jekyll-metadata
