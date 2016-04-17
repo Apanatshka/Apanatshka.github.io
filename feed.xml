@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Whatever</title>
+    <description>A web log. Mostly about computer science-y stuff. 
+</description>
+    <link>http://Apanatshka.github.io/</link>
+    <atom:link href="http://Apanatshka.github.io/feed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Sun, 17 Apr 2016 18:26:37 +0200</pubDate>
+    <lastBuildDate>Sun, 17 Apr 2016 18:26:37 +0200</lastBuildDate>
+    <generator>Jekyll v3.0.3</generator>
+    
+      <item>
+        <title>Finite Automata</title>
+        <description>&lt;p&gt;What do Turing machines and regular expressions have in common? One is a theoretical model of a computer, and can be used to prove that some things cannot be computed. The other is a practical tool for matching strings. And yet they are both based on a simple &lt;em&gt;computational model&lt;/em&gt;: a (very constrained) finite state machine (FSM).&lt;/p&gt;
+
+&lt;p&gt;In this blog post we’ll go over the basics of this type of FSM and instead of going over proofs, we’ll go over examples and little implementations in Rust. For more information about this blog post series, see &lt;a href=&quot;/compsci/2016/03/28/theory-of-computation/&quot;&gt;this announcement post&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h1 id=&quot;an-exercise-in-minimalism&quot;&gt;An exercise in minimalism&lt;/h1&gt;
+
+&lt;p&gt;We’ll start with the simplest, most restricted version of our FSMs. These are great for proofs because everything explicitly defined and super simple. But they are not so great to construct by hand, so we’ll discuss a nicer version afterwards and relate &lt;em&gt;that one&lt;/em&gt; to regular expressions. Turing machine will not be part of this post.&lt;/p&gt;
+
+&lt;h2 id=&quot;deterministic-finite-automaton-dfa&quot;&gt;Deterministic Finite Automaton (DFA)&lt;/h2&gt;
+
+&lt;p&gt;DFAs are FSMs (&lt;em&gt;automata&lt;/em&gt;) that work on a &lt;em&gt;finite&lt;/em&gt; input and give a boolean output. &lt;em&gt;True&lt;/em&gt; means the input was recognised as part of the ‘language’ that the DFA encodes, &lt;em&gt;false&lt;/em&gt; means it is not part of the language. &lt;em&gt;Deterministic&lt;/em&gt; automata define all their (&lt;em&gt;finite&lt;/em&gt; amount of) states and &lt;em&gt;exactly one&lt;/em&gt; transition for every possible pair of state and input. &lt;br /&gt;
+The way you formally describe a DFA is by defining:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;the allowable input symbols (or &lt;em&gt;alphabet&lt;/em&gt; &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi mathvariant=&quot;normal&quot;&gt;Σ&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\Sigma&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.68333em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.68333em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;Σ&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;),&lt;/li&gt;
+  &lt;li&gt;the &lt;em&gt;states&lt;/em&gt; &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;Q&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;Q&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.68333em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.8777699999999999em;vertical-align:-0.19444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;Q&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;,&lt;/li&gt;
+  &lt;li&gt;the &lt;em&gt;state transitions&lt;/em&gt; (as a finite mapping &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;δ&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\delta&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.69444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.69444em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03785em;&quot;&gt;δ&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;),&lt;/li&gt;
+  &lt;li&gt;the &lt;em&gt;start state&lt;/em&gt; &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;q_0&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.625em;vertical-align:-0.19444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; and&lt;/li&gt;
+  &lt;li&gt;the &lt;em&gt;final&lt;/em&gt; or &lt;em&gt;accept states&lt;/em&gt; &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;F&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;F&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.68333em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.68333em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.13889em;&quot;&gt;F&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;example-binary-string&quot;&gt;Example: Binary string&lt;/h3&gt;
+
+&lt;p&gt;Let’s construct a DFA that can recognise inputs that start with a one, has at least two zeroes after that, and then at least one more one, after which the ‘word’ ends.&lt;/p&gt;
+
+&lt;div class=&quot;graphviz-wrapper&quot;&gt;
+
+&lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ --&gt;
+&lt;!-- Title: Binary string DFA Pages: 1 --&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;399pt&quot; height=&quot;78pt&quot; viewbox=&quot;0.00 0.00 399.00 78.00&quot;&gt;
+&lt;title&gt;Binary string DFA&lt;/title&gt;
+&lt;desc&gt;digraph &amp;quot;Binary string DFA&amp;quot; { 
+bgcolor=&amp;quot;transparent&amp;quot;;
+rankdir=LR;
+node [shape=circle, fixedsize=shape, width=0.5];
+start [shape=none, label=&amp;quot;&amp;quot;, width=0];
+q4 [shape=doublecircle, width=0.4];
+start -&amp;gt; q0;
+q0 -&amp;gt; q1 [label=&amp;quot;1&amp;quot;];
+q1 -&amp;gt; q2 [label=&amp;quot;0&amp;quot;];
+q2 -&amp;gt; q3 [label=&amp;quot;0&amp;quot;];
+q3 -&amp;gt; q3 [label=&amp;quot;0&amp;quot;];
+q3 -&amp;gt; q4 [label=&amp;quot;1&amp;quot;];
+q4 -&amp;gt; q4 [label=&amp;quot;1&amp;quot;];
+ }&lt;/desc&gt;
+
+&lt;g id=&quot;graph0&quot; class=&quot;graph&quot; transform=&quot;scale(1 1) rotate(0) translate(4 74)&quot;&gt;
+&lt;title&gt;Binary string DFA&lt;/title&gt;
+&lt;!-- start --&gt;
+&lt;g id=&quot;node1&quot; class=&quot;node&quot;&gt;&lt;title&gt;start&lt;/title&gt;
+&lt;/g&gt;
+&lt;!-- q0 --&gt;
+&lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q0&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;56&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;56&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- start&amp;#45;&amp;gt;q0 --&gt;
+&lt;g id=&quot;edge1&quot; class=&quot;edge&quot;&gt;&lt;title&gt;start&amp;#45;&amp;gt;q0&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M18.6816,-18.5C21.5653,-18.5 24.6106,-18.5 27.6617,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;27.8306,-22.0001 37.8306,-18.5 27.8306,-15.0001 27.8306,-22.0001&quot; /&gt;
+&lt;/g&gt;
+&lt;!-- q4 --&gt;
+&lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q4&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;372.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;372.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;372.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q4&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q4&amp;#45;&amp;gt;q4 --&gt;
+&lt;g id=&quot;edge7&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q4&amp;#45;&amp;gt;q4&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M365.412,-35.7739C363.965,-45.7309 366.328,-55 372.5,-55 376.454,-55 378.844,-51.196 379.672,-45.844&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;383.171,-45.7445 379.588,-35.7739 376.171,-45.8027 383.171,-45.7445&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;372.5&quot; y=&quot;-58.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q1 --&gt;
+&lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q1&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;135&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;135&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q0&amp;#45;&amp;gt;q1 --&gt;
+&lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q0&amp;#45;&amp;gt;q1&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M74.0888,-18.5C83.659,-18.5 95.8172,-18.5 106.677,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;106.959,-22.0001 116.959,-18.5 106.959,-15.0001 106.959,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;95.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q2 --&gt;
+&lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q2&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;214&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;214&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q2&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q1&amp;#45;&amp;gt;q2 --&gt;
+&lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q1&amp;#45;&amp;gt;q2&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M153.089,-18.5C162.659,-18.5 174.817,-18.5 185.677,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;185.959,-22.0001 195.959,-18.5 185.959,-15.0001 185.959,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;174.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q3 --&gt;
+&lt;g id=&quot;node6&quot; class=&quot;node&quot;&gt;&lt;title&gt;q3&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;293&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;293&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q3&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q2&amp;#45;&amp;gt;q3 --&gt;
+&lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q2&amp;#45;&amp;gt;q3&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M232.089,-18.5C241.659,-18.5 253.817,-18.5 264.677,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;264.959,-22.0001 274.959,-18.5 264.959,-15.0001 264.959,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;253.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q3&amp;#45;&amp;gt;q4 --&gt;
+&lt;g id=&quot;edge6&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q3&amp;#45;&amp;gt;q4&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M311.2,-18.5C320.698,-18.5 332.73,-18.5 343.543,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;343.811,-22.0001 353.811,-18.5 343.811,-15.0001 343.811,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;332.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q3&amp;#45;&amp;gt;q3 --&gt;
+&lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q3&amp;#45;&amp;gt;q3&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M286.266,-35.5373C284.892,-45.3579 287.137,-54.5 293,-54.5 296.665,-54.5 298.916,-50.9289 299.753,-45.8529&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;303.252,-45.5307 299.734,-35.5373 296.252,-45.5439 303.252,-45.5307&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;293&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;/g&gt;
+&lt;/svg&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Note that I’ve already started cheating with the construction of this DFA. Not every state handles all symbols in the alphabet (0 and 1). This partially defined DFA is usually easier to write and read. The usual way to make it fully defined is to add an explicit &lt;em&gt;stuck state&lt;/em&gt;. All the unhandled symbols go to that state, and with any next input the DFA will stay in that state.&lt;/p&gt;
+
+&lt;h3 id=&quot;code-code-code&quot;&gt;Code code code&lt;/h3&gt;
+
+&lt;p&gt;In Rust we can do the partial definition of the DFA with an &lt;code class=&quot;highlighter-rouge&quot;&gt;Option&lt;/code&gt; type:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;State&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;u8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZERO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ONE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;transition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;State&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;symbol&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;State&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;symbol&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ONE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Some&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZERO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Some&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZERO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Some&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZERO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Some&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ONE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Some&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ONE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Some&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;START&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;State&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FINALS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;State&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+
+
+&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;INPUTS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ONE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZERO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZERO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZERO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZERO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ONE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ONE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;mut&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Some&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;START&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;INPUTS&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.iter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.and_then&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;st&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;transition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;st&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.clone&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()));&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.map_or&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;st&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FINALS&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.iter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.any&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(|&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;st&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nd&quot;&gt;println!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;The input is accepted&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nd&quot;&gt;println!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;The input is not accepted&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;(The crate is in this &lt;a href=&quot;https://github.com/Apanatshka/Apanatshka.github.io/tree/master/_includes/compsci/2016/04/10/finite-automata/binary_string/&quot;&gt;blog’s repository&lt;/a&gt;)&lt;br /&gt;
+So &lt;code class=&quot;highlighter-rouge&quot;&gt;None&lt;/code&gt; is the stuck state and the ‘real’ states are wrapped in a &lt;code class=&quot;highlighter-rouge&quot;&gt;Some&lt;/code&gt;. In this code the transitions are given as a function, not a mapping. When you generalise this into an automaton library (there &lt;a href=&quot;https://crates.io/search?q=automaton&quot;&gt;are&lt;/a&gt; &lt;a href=&quot;https://crates.io/search?q=automata&quot;&gt;several&lt;/a&gt; on &lt;a href=&quot;https://crates.io/&quot;&gt;crates.io&lt;/a&gt;), you’re more likely to end up with a map.&lt;/p&gt;
+
+&lt;h3 id=&quot;memory&quot;&gt;Memory&lt;/h3&gt;
+
+&lt;p&gt;Note that DFAs are so restricted that they don’t really have mutable memory. Any kind of memory of what you’ve already seen of the input needs to be statically encoded in the states of the state machine. This can get a little awkward when you want to recognise binary strings that have a 1 as the second to last symbol:&lt;/p&gt;
+
+&lt;div class=&quot;graphviz-wrapper&quot;&gt;
+
+&lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ --&gt;
+&lt;!-- Title: Binary string DFA Pages: 1 --&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;395pt&quot; height=&quot;322pt&quot; viewbox=&quot;0.00 0.00 394.57 322.07&quot;&gt;
+&lt;title&gt;Binary string DFA&lt;/title&gt;
+&lt;desc&gt;digraph &amp;quot;Binary string DFA&amp;quot; { 
+layout=&amp;quot;circo&amp;quot;;
+bgcolor=&amp;quot;transparent&amp;quot;;
+rankdir=LR;
+start [shape=none, label=&amp;quot;&amp;quot;, width=0];
+node [shape=doublecircle, fixedsize=shape, width=0.4, mindist=2];
+q100 [label=&amp;quot;100&amp;quot;];
+q101 [label=&amp;quot;101&amp;quot;];
+q110 [label=&amp;quot;110&amp;quot;];
+q111 [label=&amp;quot;111&amp;quot;];
+node [shape=circle, fixedsize=shape, width=0.5];
+q000 [label=&amp;quot;000&amp;quot;];
+q001 [label=&amp;quot;001&amp;quot;];
+q010 [label=&amp;quot;010&amp;quot;];
+q011 [label=&amp;quot;011&amp;quot;];
+start -&amp;gt; q000;
+q000 -&amp;gt; q000 [label=&amp;quot;0&amp;quot;];
+q000 -&amp;gt; q001 [label=&amp;quot;1&amp;quot;];
+q001 -&amp;gt; q010 [label=&amp;quot;0&amp;quot;];
+q001 -&amp;gt; q011 [label=&amp;quot;1&amp;quot;];
+q010 -&amp;gt; q100 [label=&amp;quot;0&amp;quot;];
+q010 -&amp;gt; q101 [label=&amp;quot;1&amp;quot;];
+q011 -&amp;gt; q110 [label=&amp;quot;0&amp;quot;];
+q011 -&amp;gt; q111 [label=&amp;quot;1&amp;quot;];
+q100 -&amp;gt; q000 [label=&amp;quot;0&amp;quot;];
+q100 -&amp;gt; q001 [label=&amp;quot;1&amp;quot;];
+q101 -&amp;gt; q010 [label=&amp;quot;0&amp;quot;];
+q101 -&amp;gt; q011 [label=&amp;quot;1&amp;quot;];
+q110 -&amp;gt; q100 [label=&amp;quot;0&amp;quot;];
+q110 -&amp;gt; q101 [label=&amp;quot;1&amp;quot;];
+q111 -&amp;gt; q110 [label=&amp;quot;0&amp;quot;];
+q111 -&amp;gt; q111 [label=&amp;quot;1&amp;quot;];
+ }&lt;/desc&gt;
+
+&lt;g id=&quot;graph0&quot; class=&quot;graph&quot; transform=&quot;scale(1 1) rotate(0) translate(4 318.066)&quot;&gt;
+&lt;title&gt;Binary string DFA&lt;/title&gt;
+&lt;!-- start --&gt;
+&lt;g id=&quot;node1&quot; class=&quot;node&quot;&gt;&lt;title&gt;start&lt;/title&gt;
+&lt;/g&gt;
+&lt;!-- q000 --&gt;
+&lt;g id=&quot;node6&quot; class=&quot;node&quot;&gt;&lt;title&gt;q000&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;90.5&quot; cy=&quot;-157.283&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;90.5&quot; y=&quot;-153.583&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;000&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- start&amp;#45;&amp;gt;q000 --&gt;
+&lt;g id=&quot;edge1&quot; class=&quot;edge&quot;&gt;&lt;title&gt;start&amp;#45;&amp;gt;q000&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M1.07472,-157.283C5.71729,-157.283 37.5418,-157.283 61.9178,-157.283&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;62.138,-160.783 72.1379,-157.283 62.1379,-153.783 62.138,-160.783&quot; /&gt;
+&lt;/g&gt;
+&lt;!-- q100 --&gt;
+&lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q100&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;131.149&quot; cy=&quot;-59.1486&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;131.149&quot; cy=&quot;-59.1486&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;131.149&quot; y=&quot;-55.4486&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;100&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q100&amp;#45;&amp;gt;q000 --&gt;
+&lt;g id=&quot;edge10&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q100&amp;#45;&amp;gt;q000&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M124.068,-76.2424C117.831,-91.2992 108.648,-113.471 101.462,-130.819&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;98.0926,-129.807 97.4993,-140.385 104.56,-132.486 98.0926,-129.807&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;109.265&quot; y=&quot;-107.331&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q001 --&gt;
+&lt;g id=&quot;node7&quot; class=&quot;node&quot;&gt;&lt;title&gt;q001&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;131.149&quot; cy=&quot;-255.418&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;131.149&quot; y=&quot;-251.718&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;001&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q100&amp;#45;&amp;gt;q001 --&gt;
+&lt;g id=&quot;edge11&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q100&amp;#45;&amp;gt;q001&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M131.149,-77.9677C131.149,-112.582 131.149,-186.517 131.149,-227.176&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;127.649,-227.227 131.149,-237.227 134.649,-227.227 127.649,-227.227&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;134.649&quot; y=&quot;-141.372&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q101 --&gt;
+&lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q101&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;327.418&quot; cy=&quot;-255.418&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;327.418&quot; cy=&quot;-255.418&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;327.418&quot; y=&quot;-251.718&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;101&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q010 --&gt;
+&lt;g id=&quot;node8&quot; class=&quot;node&quot;&gt;&lt;title&gt;q010&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;229.283&quot; cy=&quot;-296.066&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;229.283&quot; y=&quot;-292.366&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;010&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q101&amp;#45;&amp;gt;q010 --&gt;
+&lt;g id=&quot;edge12&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q101&amp;#45;&amp;gt;q010&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M308.774,-257.493C292.845,-262.222 269.894,-271.439 252.729,-279.837&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;250.676,-276.958 243.388,-284.648 253.881,-283.181 250.676,-276.958&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;277.252&quot; y=&quot;-257.465&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q011 --&gt;
+&lt;g id=&quot;node9&quot; class=&quot;node&quot;&gt;&lt;title&gt;q011&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;368.066&quot; cy=&quot;-157.283&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;368.066&quot; y=&quot;-153.583&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;011&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q101&amp;#45;&amp;gt;q011 --&gt;
+&lt;g id=&quot;edge13&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q101&amp;#45;&amp;gt;q011&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M334.498,-238.324C340.735,-223.267 349.919,-201.096 357.104,-183.748&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;360.474,-184.759 361.067,-174.181 354.006,-182.08 360.474,-184.759&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;342.301&quot; y=&quot;-214.836&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q110 --&gt;
+&lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q110&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;229.283&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;229.283&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;229.283&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;110&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q110&amp;#45;&amp;gt;q100 --&gt;
+&lt;g id=&quot;edge14&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q110&amp;#45;&amp;gt;q100&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M212.189,-25.5805C197.224,-31.7792 175.231,-40.8891 157.931,-48.055&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;156.275,-44.9525 148.376,-52.0129 158.954,-51.4196 156.275,-44.9525&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;181.56&quot; y=&quot;-40.6177&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q110&amp;#45;&amp;gt;q101 --&gt;
+&lt;g id=&quot;edge15&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q110&amp;#45;&amp;gt;q101&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M236.499,-35.9211C253.519,-77.0105 296.253,-180.179 316.479,-229.01&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;313.263,-230.391 320.323,-238.29 319.73,-227.712 313.263,-230.391&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;272.989&quot; y=&quot;-136.265&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q111 --&gt;
+&lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q111&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;327.418&quot; cy=&quot;-59.1486&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;327.418&quot; cy=&quot;-59.1486&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;327.418&quot; y=&quot;-55.4486&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;111&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q111&amp;#45;&amp;gt;q110 --&gt;
+&lt;g id=&quot;edge16&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q111&amp;#45;&amp;gt;q110&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M310.324,-52.0682C295.359,-45.8695 273.366,-36.7596 256.065,-29.5936&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;257.088,-26.229 246.51,-25.6357 254.41,-32.6962 257.088,-26.229&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;279.695&quot; y=&quot;-44.6309&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q111&amp;#45;&amp;gt;q111 --&gt;
+&lt;g id=&quot;edge17&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q111&amp;#45;&amp;gt;q111&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M345.069,-65.5756C354.882,-66.7753 363.918,-64.633 363.918,-59.1486 363.918,-55.7209 360.388,-53.5986 355.345,-52.7819&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;355.09,-49.2804 345.069,-52.7216 355.049,-56.2803 355.09,-49.2804&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;367.418&quot; y=&quot;-55.4486&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q000&amp;#45;&amp;gt;q000 --&gt;
+&lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q000&amp;#45;&amp;gt;q000&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M107.396,-163.611C117.495,-165.017 127,-162.908 127,-157.283 127,-153.68 123.099,-151.519 117.64,-150.801&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;117.342,-147.305 107.396,-150.955 117.447,-154.304 117.342,-147.305&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;130.5&quot; y=&quot;-153.583&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q000&amp;#45;&amp;gt;q001 --&gt;
+&lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q000&amp;#45;&amp;gt;q001&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M97.3955,-173.93C103.644,-189.015 112.957,-211.5 120.219,-229.032&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;117.159,-230.789 124.219,-238.689 123.626,-228.111 117.159,-230.789&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105.307&quot; y=&quot;-205.281&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q001&amp;#45;&amp;gt;q010 --&gt;
+&lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q001&amp;#45;&amp;gt;q010&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M147.796,-262.313C162.881,-268.562 185.366,-277.875 202.898,-285.137&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;201.976,-288.544 212.554,-289.137 204.655,-282.076 201.976,-288.544&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;171.847&quot; y=&quot;-277.525&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q001&amp;#45;&amp;gt;q011 --&gt;
+&lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q001&amp;#45;&amp;gt;q011&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M147.808,-248.517C188.505,-231.66 293.214,-188.288 342.145,-168.02&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;343.526,-171.237 351.425,-164.176 340.847,-164.769 343.526,-171.237&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;241.477&quot; y=&quot;-212.068&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q010&amp;#45;&amp;gt;q100 --&gt;
+&lt;g id=&quot;edge6&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q010&amp;#45;&amp;gt;q100&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M222.382,-279.407C205.607,-238.907 162.573,-135.013 142.181,-85.7843&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;145.366,-84.326 138.305,-76.4266 138.899,-87.0048 145.366,-84.326&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;178.782&quot; y=&quot;-186.395&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q010&amp;#45;&amp;gt;q101 --&gt;
+&lt;g id=&quot;edge7&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q010&amp;#45;&amp;gt;q101&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M247.465,-294.127C263.392,-289.446 286.589,-280.147 303.915,-271.674&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;305.555,-274.766 312.853,-267.086 302.358,-268.539 305.555,-274.766&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;272.19&quot; y=&quot;-286.7&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q011&amp;#45;&amp;gt;q110 --&gt;
+&lt;g id=&quot;edge8&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q011&amp;#45;&amp;gt;q110&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M355.259,-144.475C331.112,-120.329 278.68,-67.8973 249.65,-38.8667&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;252.011,-36.2777 242.465,-31.6815 247.061,-41.2275 252.011,-36.2777&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;298.954&quot; y=&quot;-95.4711&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q011&amp;#45;&amp;gt;q111 --&gt;
+&lt;g id=&quot;edge9&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q011&amp;#45;&amp;gt;q111&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M361.171,-140.636C354.998,-125.734 345.834,-103.61 338.612,-86.1738&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;341.682,-84.4388 334.621,-76.5395 335.214,-87.1177 341.682,-84.4388&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;346.391&quot; y=&quot;-117.205&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;/g&gt;
+&lt;/svg&gt;
+&lt;/div&gt;
+
+&lt;p&gt;We remember the last three input symbols in our states. That gives us &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msup&gt;&lt;mn&gt;2&lt;/mn&gt;&lt;mn&gt;3&lt;/mn&gt;&lt;/msup&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;2^3&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.8141079999999999em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.8141079999999999em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:-0.363em;margin-right:0.05em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;3&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; states, an exponential relation. So with these kinds of problems, you really don’t want to design these DFAs by hand.&lt;/p&gt;
+
+&lt;h2 id=&quot;non-deterministic-finite-automaton-nfa&quot;&gt;Non-deterministic Finite Automaton (NFA)&lt;/h2&gt;
+
+&lt;p&gt;Non-determinism allows states to have multiple transitions per symbol. That means that when you simulate an NFA, you can be in multiple states at once. This allows us to avoid the exponential blowup of the last example:&lt;/p&gt;
+
+&lt;div class=&quot;graphviz-wrapper&quot;&gt;
+
+&lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ --&gt;
+&lt;!-- Title: Binary string DFA Pages: 1 --&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;342pt&quot; height=&quot;78pt&quot; viewbox=&quot;0.00 0.00 342.00 77.50&quot;&gt;
+&lt;title&gt;Binary string DFA&lt;/title&gt;
+&lt;desc&gt;digraph &amp;quot;Binary string DFA&amp;quot; { 
+bgcolor=&amp;quot;transparent&amp;quot;;
+rankdir=LR;
+start [shape=none, label=&amp;quot;&amp;quot;, width=0];
+node [shape=doublecircle, fixedsize=shape, width=0.4, mindist=2];
+q4 [label=&amp;quot;1..&amp;quot;];
+node [shape=circle, fixedsize=shape, width=0.5];
+q1 [label=&amp;quot;...&amp;quot;];
+q2 [label=&amp;quot;..1&amp;quot;];
+q3 [label=&amp;quot;.1.&amp;quot;];
+start -&amp;gt; q1;
+q1 -&amp;gt; q1 [label=&amp;quot;0,1&amp;quot;];
+q1 -&amp;gt; q2 [label=&amp;quot;1&amp;quot;];
+q2 -&amp;gt; q3 [label=&amp;quot;0,1&amp;quot;];
+q3 -&amp;gt; q4 [label=&amp;quot;0,1&amp;quot;];
+ }&lt;/desc&gt;
+
+&lt;g id=&quot;graph0&quot; class=&quot;graph&quot; transform=&quot;scale(1 1) rotate(0) translate(4 73.5)&quot;&gt;
+&lt;title&gt;Binary string DFA&lt;/title&gt;
+&lt;!-- start --&gt;
+&lt;g id=&quot;node1&quot; class=&quot;node&quot;&gt;&lt;title&gt;start&lt;/title&gt;
+&lt;/g&gt;
+&lt;!-- q1 --&gt;
+&lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q1&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;56&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;56&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;...&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- start&amp;#45;&amp;gt;q1 --&gt;
+&lt;g id=&quot;edge1&quot; class=&quot;edge&quot;&gt;&lt;title&gt;start&amp;#45;&amp;gt;q1&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M1.15491,-18.5C2.67247,-18.5 15.0966,-18.5 27.6277,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;27.9419,-22.0001 37.9419,-18.5 27.9418,-15.0001 27.9419,-22.0001&quot; /&gt;
+&lt;/g&gt;
+&lt;!-- q4 --&gt;
+&lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q4&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;315.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;315.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;315.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1..&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q1&amp;#45;&amp;gt;q1 --&gt;
+&lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q1&amp;#45;&amp;gt;q1&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M49.6208,-35.5373C48.3189,-45.3579 50.4453,-54.5 56,-54.5 59.4717,-54.5 61.6042,-50.9289 62.3975,-45.8529&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;65.8971,-45.531 62.3792,-35.5373 58.8971,-45.5435 65.8971,-45.531&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;56&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0,1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q2 --&gt;
+&lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q2&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;135&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;135&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;..1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q1&amp;#45;&amp;gt;q2 --&gt;
+&lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q1&amp;#45;&amp;gt;q2&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M74.0888,-18.5C83.659,-18.5 95.8172,-18.5 106.677,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;106.959,-22.0001 116.959,-18.5 106.959,-15.0001 106.959,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;95.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q3 --&gt;
+&lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q3&lt;/title&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;225&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;225&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;.1.&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q2&amp;#45;&amp;gt;q3 --&gt;
+&lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q2&amp;#45;&amp;gt;q3&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M153.386,-18.5C165.76,-18.5 182.631,-18.5 196.78,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;196.95,-22.0001 206.95,-18.5 196.95,-15.0001 196.95,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;180&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0,1&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- q3&amp;#45;&amp;gt;q4 --&gt;
+&lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q3&amp;#45;&amp;gt;q4&lt;/title&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M243.064,-18.5C255.392,-18.5 272.316,-18.5 286.597,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;286.883,-22.0001 296.883,-18.5 286.883,-15.0001 286.883,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;270&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0,1&lt;/text&gt;
+&lt;/g&gt;
+&lt;/g&gt;
+&lt;/svg&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Although this NFA is easier to describe, it’s still always translatable to a DFA. This translation algorithm is called powerset construction or subset construction. The powerset of a set is the set of all combinations: &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mrow&gt;&lt;mi mathvariant=&quot;double-struck&quot;&gt;P&lt;/mi&gt;&lt;/mrow&gt;&lt;mo&gt;(&lt;/mo&gt;&lt;mo&gt;{&lt;/mo&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;mo separator=&quot;true&quot;&gt;,&lt;/mo&gt;&lt;mn&gt;1&lt;/mn&gt;&lt;mo&gt;}&lt;/mo&gt;&lt;mo&gt;)&lt;/mo&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mo&gt;{&lt;/mo&gt;&lt;mi mathvariant=&quot;normal&quot;&gt;∅&lt;/mi&gt;&lt;mo separator=&quot;true&quot;&gt;,&lt;/mo&gt;&lt;mo&gt;{&lt;/mo&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;mo&gt;}&lt;/mo&gt;&lt;mo separator=&quot;true&quot;&gt;,&lt;/mo&gt;&lt;mo&gt;{&lt;/mo&gt;&lt;mn&gt;1&lt;/mn&gt;&lt;mo&gt;}&lt;/mo&gt;&lt;mo separator=&quot;true&quot;&gt;,&lt;/mo&gt;&lt;mo&gt;{&lt;/mo&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;mo separator=&quot;true&quot;&gt;,&lt;/mo&gt;&lt;mn&gt;1&lt;/mn&gt;&lt;mo&gt;}&lt;/mo&gt;&lt;mo&gt;}&lt;/mo&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\mathbb{P}(\{0,1\}) = \{\emptyset, \{0\}, \{1\}, \{0,1\}\}&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.75em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:1em;vertical-align:-0.25em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathbb&quot;&gt;P&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mopen&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mopen&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;mpunct&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;mrel&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mopen&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;∅&lt;/span&gt;&lt;span class=&quot;mpunct&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mopen&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;mpunct&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mopen&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;mpunct&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mopen&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;mpunct&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;powerset-construction&quot;&gt;Powerset construction&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;The &lt;em&gt;alphabet&lt;/em&gt; stays the same.&lt;/li&gt;
+  &lt;li&gt;We use the powerset of the states of the NFA to create the states for the DFA. (That’s where the exponential blowup comes from, &lt;strong&gt;if&lt;/strong&gt; all those states are used.) The state with the &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi mathvariant=&quot;normal&quot;&gt;∅&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\emptyset&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.75em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.80556em;vertical-align:-0.05556em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;∅&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; is the &lt;em&gt;stuck state&lt;/em&gt; that we already saw earlier.&lt;/li&gt;
+  &lt;li&gt;The transitions are based on the simulation of the NFA. So if you are in &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mo&gt;{&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mi&gt;o&lt;/mi&gt;&lt;/msub&gt;&lt;mo separator=&quot;true&quot;&gt;,&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mn&gt;1&lt;/mn&gt;&lt;/msub&gt;&lt;mo separator=&quot;true&quot;&gt;,&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mn&gt;3&lt;/mn&gt;&lt;/msub&gt;&lt;mo&gt;}&lt;/mo&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\{q_o, q_1, q_3\}&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.75em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:1em;vertical-align:-0.25em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mopen&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;o&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mpunct&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;1&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mpunct&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;3&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; then the transition with symbol &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msub&gt;&lt;mi&gt;σ&lt;/mi&gt;&lt;mn&gt;2&lt;/mn&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\sigma_2&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.58056em;vertical-align:-0.15em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;σ&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;2&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; takes you to the state in the DFA that is labelled with states of the NFA that are reachable with &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msub&gt;&lt;mi&gt;σ&lt;/mi&gt;&lt;mn&gt;2&lt;/mn&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\sigma_2&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.58056em;vertical-align:-0.15em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;σ&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;2&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; from the states &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mi&gt;o&lt;/mi&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;q_o&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.625em;vertical-align:-0.19444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;o&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;, &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mn&gt;1&lt;/mn&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;q_1&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.625em;vertical-align:-0.19444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;1&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; and &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mn&gt;3&lt;/mn&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;q_3&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.625em;vertical-align:-0.19444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;3&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;.&lt;/li&gt;
+  &lt;li&gt;The start state is still the same although now called &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mo&gt;{&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mi&gt;o&lt;/mi&gt;&lt;/msub&gt;&lt;mo&gt;}&lt;/mo&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\{q_o\}&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.75em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:1em;vertical-align:-0.25em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mopen&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;o&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; instead of &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mi&gt;o&lt;/mi&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;q_o&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.625em;vertical-align:-0.19444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;o&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;.&lt;/li&gt;
+  &lt;li&gt;The final states are every state that has an NFA final state in its set.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;epsilon-moves&quot;&gt;Epsilon moves&lt;/h3&gt;
+
+&lt;p&gt;The empty string is referred to with the greek letter &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;. If you allow transitions in an NFA to be labelled with &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;, you get the NFA-&lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; type of automata. This changes the powerset construction slightly, because an &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; move from the start state in the NFA &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;q_0&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.625em;vertical-align:-0.19444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; means that the start state of the DFA will be one of the compound states &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mo&gt;{&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;mo separator=&quot;true&quot;&gt;,&lt;/mo&gt;&lt;mi mathvariant=&quot;normal&quot;&gt;.&lt;/mi&gt;&lt;mi mathvariant=&quot;normal&quot;&gt;.&lt;/mi&gt;&lt;mi mathvariant=&quot;normal&quot;&gt;.&lt;/mi&gt;&lt;mo&gt;}&lt;/mo&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\{q_0, ...\}&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.75em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:1em;vertical-align:-0.25em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mopen&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathit&quot; style=&quot;margin-right:0.03588em;&quot;&gt;q&lt;/span&gt;&lt;span class=&quot;vlist&quot;&gt;&lt;span style=&quot;top:0.15em;margin-right:0.05em;margin-left:-0.03588em;&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;reset-textstyle scriptstyle cramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;baseline-fix&quot;&gt;&lt;span class=&quot;fontsize-ensurer reset-size5 size5&quot;&gt;&lt;span style=&quot;font-size:0em;&quot;&gt;​&lt;/span&gt;&lt;/span&gt;​&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mpunct&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mclose&quot;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;. This class of automata is still not more powerful than the NFA or DFA. But it &lt;em&gt;is&lt;/em&gt; useful for the definition of the basic regular expression operators.&lt;/p&gt;
+
+&lt;h3 id=&quot;regular-expressions&quot;&gt;Regular expressions&lt;/h3&gt;
+
+&lt;p&gt;Now just to warn you: regular expressions in programming were once based on this automata theory, but have since been made much more powerful. Regex can describe much more than just &lt;em&gt;regular&lt;/em&gt; languages.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;The basics&lt;/strong&gt; Ok, say you have an empty regular expression. That’s an NFA with one state, the start state, which is also a final state. It only recognises &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;. &lt;br /&gt;
+A regular expression that matches exactly &lt;code class=&quot;highlighter-rouge&quot;&gt;1&lt;/code&gt; is the same as an NFA with two states, the start state, and a separate final state with a transition in between labelled with &lt;code class=&quot;highlighter-rouge&quot;&gt;1&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Option&lt;/strong&gt; Let’s take two regular expressions put an ‘or’ (&lt;code class=&quot;highlighter-rouge&quot;&gt;|&lt;/code&gt;) in between. If either one matches, the whole regex matches. If we have two NFA equivalents, we can make a new start state and &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;-transitions to the two old start states.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Concatenation&lt;/strong&gt; Let’s take two regular expressions and stick them together, one after the other. In NFA-land that means that the final states of the first NFA become normal states with &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;-transitions to the start state of the second NFA.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Kleene Star&lt;/strong&gt; This is the &lt;code class=&quot;highlighter-rouge&quot;&gt;*&lt;/code&gt; in a regular expression, a zero-or-more. With this and the option, you can make a one-or-more (&lt;code class=&quot;highlighter-rouge&quot;&gt;+&lt;/code&gt;). The way this works in NFA-land is as follows: Create a new start state, which is a final state, and give it an &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;-transition to the old start state (the zero part). Give the old final states &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;-transitions to the old start state (the more part).&lt;/p&gt;
+
+&lt;h3 id=&quot;limitations-and-non-regular-languages&quot;&gt;Limitations and Non-regular languages&lt;/h3&gt;
+
+&lt;p&gt;Say you want to recognise binary strings that starts with any number of zeroes, but then is followed by an equal number of ones. Because the number of zeroes is unbounded, we cannot use a finite number of states to count how many zeroes we’ve seen so far, to match with the amount of ones to come. Basically, it’s impossible to use DFAs or NFAs to recognise ‘words’ of this language.&lt;/p&gt;
+
+&lt;p&gt;More generally you can prove languages non-regular with the &lt;a href=&quot;https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages&quot;&gt;pumping lemma for regular languages&lt;/a&gt;. I don’t have a super-intuitive way of explaining the pumping lemma, so if you want to know more, try reading the theory on it.&lt;/p&gt;
+
+&lt;h1 id=&quot;ps&quot;&gt;P.S.&lt;/h1&gt;
+
+&lt;p&gt;Next blog post we’ll look at context-free languages, which is a superset of the regular languages. They can be described with context-free grammars (which you may know from the definitions of programming language syntax) and which you can recognise with an automaton that has a single stack for memory.&lt;/p&gt;
+
+&lt;p&gt;I was going to write some more Rust code for you to look at, like a generally usable automaton library and the powerset construction. But this post has taken so long, it is already long, and there are Rust crates available with that kind of stuff… So, whatever ¯\_(ツ)_/¯&lt;/p&gt;
+</description>
+        <pubDate>Sun, 10 Apr 2016 00:00:00 +0200</pubDate>
+        <link>http://Apanatshka.github.io/compsci/2016/04/10/finite-automata/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/04/10/finite-automata/</guid>
+        
+        <category>theory</category>
+        
+        <category>automata</category>
+        
+        <category>computation</category>
+        
+        <category>nfa</category>
+        
+        <category>dfa</category>
+        
+        <category>regular expression</category>
+        
+        
+        <category>CompSci</category>
+        
+      </item>
+    
+      <item>
+        <title>Theory of Computation</title>
+        <description>&lt;h1 id=&quot;what&quot;&gt;What&lt;/h1&gt;
+
+&lt;p&gt;This is just an announcement post. I’m going to write some posts about theoretical computer science stuff. The planned ‘stuff’ is: finite automata, regular languages, and context-free languages. The plan is to work up to parsers and parsing algorithms eventually, but let’s see how far I get and quickly I get there first.&lt;/p&gt;
+
+&lt;h1 id=&quot;how&quot;&gt;How&lt;/h1&gt;
+
+&lt;p&gt;To start things off I’m going to use the book &lt;a href=&quot;https://books.google.nl/books?id=VJ1mQgAACAAJ&quot;&gt;Introduction to the Theory of Computation&lt;/a&gt; by Michael Sipser. I have the second edition, the international one. I picked this book because I was taught with this book, and it’s pretty good in my opinion. Granted I’ve only read two books on this topic, but in comparison this one is pretty complete and nice to read. I’m going to use some of the ordering and examples from the book and check that I’m using the right terminology. But to make sure I don’t rip it off, I’ll re-explain things in my own words and add some extras (see &lt;a href=&quot;#ps-rust&quot;&gt;P.S.: Rust&lt;/a&gt;).&lt;/p&gt;
+
+&lt;h1 id=&quot;why&quot;&gt;Why&lt;/h1&gt;
+
+&lt;p&gt;I write the blog posts to practice writing. When I wrote my master’s thesis I found out that writing &lt;em&gt;well&lt;/em&gt; is pretty hard. I expect to need to write a lot more in the coming years, so I need to learn how to construct a narative, keep to it, and keep it interesting. So I’m going to start with some theory that underlies a topic that I like: parsers. And I’m going to write about it in the style that I prefer: informal. Hopefully that will also help me improve my formal writing skills. In the mean time I’ll be writing about interesting theoretical subjects, so I get to practice making the posts interesting to read. I have my pet peeves about theoretical texts, so hopefully I can present the subject material in a way that I find nice. Which is mostly concrete examples, and not using single (greek) letters/symbols for everything. Let’s see how it goes!&lt;/p&gt;
+
+&lt;h1 id=&quot;ps-rust&quot;&gt;P.S.: Rust&lt;/h1&gt;
+
+&lt;p&gt;This stuff is very theorical, so to spice things up I’m going to try to add a lot of code snippets. For the programming language I picked &lt;a href=&quot;https://www.rust-lang.org/&quot;&gt;Rust&lt;/a&gt; because I’d like to learn the language, and this seems like a good opportunity to try it out. That does mean that I’ll be figuring out the language as I write the posts, so I’ll probably make mistakes. But whatever, that’s how you learn :)&lt;/p&gt;
+</description>
+        <pubDate>Mon, 28 Mar 2016 00:00:00 +0200</pubDate>
+        <link>http://Apanatshka.github.io/compsci/2016/03/28/theory-of-computation/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/03/28/theory-of-computation/</guid>
+        
+        <category>announcement</category>
+        
+        <category>theory</category>
+        
+        <category>computation</category>
+        
+        <category>automata</category>
+        
+        <category>basics</category>
+        
+        <category>rust</category>
+        
+        
+        <category>CompSci</category>
+        
+      </item>
+    
+  </channel>
+</rss>

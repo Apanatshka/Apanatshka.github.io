@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Finite Automata</title>
+    <meta name="description" content="A web log. Mostly about computer science-y stuff. 
+">
+
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="canonical" href="http://Apanatshka.github.io/compsci/2016/04/10/finite-automata/">
+    
+    <!--<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+    <link rel="stylesheet" type="text/css" href="/css/katex.min.css">
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">Whatever</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Finite Automata</h1>
+    <p class="post-meta">Apr 10, 2016</p>
+  </header>
+
+  <article class="post-content">
+    <p>What do Turing machines and regular expressions have in common? One is a theoretical model of a computer, and can be used to prove that some things cannot be computed. The other is a practical tool for matching strings. And yet they are both based on a simple <em>computational model</em>: a (very constrained) finite state machine (FSM).</p>
+
+<p>In this blog post we’ll go over the basics of this type of FSM and instead of going over proofs, we’ll go over examples and little implementations in Rust. For more information about this blog post series, see <a href="/compsci/2016/03/28/theory-of-computation/">this announcement post</a>.</p>
+
+<h1 id="an-exercise-in-minimalism">An exercise in minimalism</h1>
+
+<p>We’ll start with the simplest, most restricted version of our FSMs. These are great for proofs because everything explicitly defined and super simple. But they are not so great to construct by hand, so we’ll discuss a nicer version afterwards and relate <em>that one</em> to regular expressions. Turing machine will not be part of this post.</p>
+
+<h2 id="deterministic-finite-automaton-dfa">Deterministic Finite Automaton (DFA)</h2>
+
+<p>DFAs are FSMs (<em>automata</em>) that work on a <em>finite</em> input and give a boolean output. <em>True</em> means the input was recognised as part of the ‘language’ that the DFA encodes, <em>false</em> means it is not part of the language. <em>Deterministic</em> automata define all their (<em>finite</em> amount of) states and <em>exactly one</em> transition for every possible pair of state and input. <br />
+The way you formally describe a DFA is by defining:</p>
+
+<ol>
+  <li>the allowable input symbols (or <em>alphabet</em> <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="normal">Σ</mi></mrow><annotation encoding="application/x-tex">\Sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathrm">Σ</span></span></span></span>),</li>
+  <li>the <em>states</em> <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">Q</span></span></span></span>,</li>
+  <li>the <em>state transitions</em> (as a finite mapping <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>δ</mi></mrow><annotation encoding="application/x-tex">\delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03785em;">δ</span></span></span></span>),</li>
+  <li>the <em>start state</em> <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>q</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">q_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">0</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span> and</li>
+  <li>the <em>final</em> or <em>accept states</em> <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>F</mi></mrow><annotation encoding="application/x-tex">F</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">F</span></span></span></span>.</li>
+</ol>
+
+<h3 id="example-binary-string">Example: Binary string</h3>
+
+<p>Let’s construct a DFA that can recognise inputs that start with a one, has at least two zeroes after that, and then at least one more one, after which the ‘word’ ends.</p>
+
+<div class="graphviz-wrapper">
+
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Binary string DFA Pages: 1 -->
+<svg role="img" aria-label="Binary string DFA" width="399pt" height="78pt" viewbox="0.00 0.00 399.00 78.00">
+<title>Binary string DFA</title>
+<desc>digraph &quot;Binary string DFA&quot; { 
+bgcolor=&quot;transparent&quot;;
+rankdir=LR;
+node [shape=circle, fixedsize=shape, width=0.5];
+start [shape=none, label=&quot;&quot;, width=0];
+q4 [shape=doublecircle, width=0.4];
+start -&gt; q0;
+q0 -&gt; q1 [label=&quot;1&quot;];
+q1 -&gt; q2 [label=&quot;0&quot;];
+q2 -&gt; q3 [label=&quot;0&quot;];
+q3 -&gt; q3 [label=&quot;0&quot;];
+q3 -&gt; q4 [label=&quot;1&quot;];
+q4 -&gt; q4 [label=&quot;1&quot;];
+ }</desc>
+
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 74)">
+<title>Binary string DFA</title>
+<!-- start -->
+<g id="node1" class="node"><title>start</title>
+</g>
+<!-- q0 -->
+<g id="node3" class="node"><title>q0</title>
+<ellipse fill="none" stroke="black" cx="56" cy="-18.5" rx="18" ry="18" />
+<text text-anchor="middle" x="56" y="-14.8" font-family="Times,serif" font-size="14.00">q0</text>
+</g>
+<!-- start&#45;&gt;q0 -->
+<g id="edge1" class="edge"><title>start&#45;&gt;q0</title>
+<path fill="none" stroke="black" d="M18.6816,-18.5C21.5653,-18.5 24.6106,-18.5 27.6617,-18.5" />
+<polygon fill="black" stroke="black" points="27.8306,-22.0001 37.8306,-18.5 27.8306,-15.0001 27.8306,-22.0001" />
+</g>
+<!-- q4 -->
+<g id="node2" class="node"><title>q4</title>
+<ellipse fill="none" stroke="black" cx="372.5" cy="-18.5" rx="14.5" ry="14.5" />
+<ellipse fill="none" stroke="black" cx="372.5" cy="-18.5" rx="18.5" ry="18.5" />
+<text text-anchor="middle" x="372.5" y="-14.8" font-family="Times,serif" font-size="14.00">q4</text>
+</g>
+<!-- q4&#45;&gt;q4 -->
+<g id="edge7" class="edge"><title>q4&#45;&gt;q4</title>
+<path fill="none" stroke="black" d="M365.412,-35.7739C363.965,-45.7309 366.328,-55 372.5,-55 376.454,-55 378.844,-51.196 379.672,-45.844" />
+<polygon fill="black" stroke="black" points="383.171,-45.7445 379.588,-35.7739 376.171,-45.8027 383.171,-45.7445" />
+<text text-anchor="middle" x="372.5" y="-58.8" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q1 -->
+<g id="node4" class="node"><title>q1</title>
+<ellipse fill="none" stroke="black" cx="135" cy="-18.5" rx="18" ry="18" />
+<text text-anchor="middle" x="135" y="-14.8" font-family="Times,serif" font-size="14.00">q1</text>
+</g>
+<!-- q0&#45;&gt;q1 -->
+<g id="edge2" class="edge"><title>q0&#45;&gt;q1</title>
+<path fill="none" stroke="black" d="M74.0888,-18.5C83.659,-18.5 95.8172,-18.5 106.677,-18.5" />
+<polygon fill="black" stroke="black" points="106.959,-22.0001 116.959,-18.5 106.959,-15.0001 106.959,-22.0001" />
+<text text-anchor="middle" x="95.5" y="-22.3" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q2 -->
+<g id="node5" class="node"><title>q2</title>
+<ellipse fill="none" stroke="black" cx="214" cy="-18.5" rx="18" ry="18" />
+<text text-anchor="middle" x="214" y="-14.8" font-family="Times,serif" font-size="14.00">q2</text>
+</g>
+<!-- q1&#45;&gt;q2 -->
+<g id="edge3" class="edge"><title>q1&#45;&gt;q2</title>
+<path fill="none" stroke="black" d="M153.089,-18.5C162.659,-18.5 174.817,-18.5 185.677,-18.5" />
+<polygon fill="black" stroke="black" points="185.959,-22.0001 195.959,-18.5 185.959,-15.0001 185.959,-22.0001" />
+<text text-anchor="middle" x="174.5" y="-22.3" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q3 -->
+<g id="node6" class="node"><title>q3</title>
+<ellipse fill="none" stroke="black" cx="293" cy="-18.5" rx="18" ry="18" />
+<text text-anchor="middle" x="293" y="-14.8" font-family="Times,serif" font-size="14.00">q3</text>
+</g>
+<!-- q2&#45;&gt;q3 -->
+<g id="edge4" class="edge"><title>q2&#45;&gt;q3</title>
+<path fill="none" stroke="black" d="M232.089,-18.5C241.659,-18.5 253.817,-18.5 264.677,-18.5" />
+<polygon fill="black" stroke="black" points="264.959,-22.0001 274.959,-18.5 264.959,-15.0001 264.959,-22.0001" />
+<text text-anchor="middle" x="253.5" y="-22.3" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q3&#45;&gt;q4 -->
+<g id="edge6" class="edge"><title>q3&#45;&gt;q4</title>
+<path fill="none" stroke="black" d="M311.2,-18.5C320.698,-18.5 332.73,-18.5 343.543,-18.5" />
+<polygon fill="black" stroke="black" points="343.811,-22.0001 353.811,-18.5 343.811,-15.0001 343.811,-22.0001" />
+<text text-anchor="middle" x="332.5" y="-22.3" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q3&#45;&gt;q3 -->
+<g id="edge5" class="edge"><title>q3&#45;&gt;q3</title>
+<path fill="none" stroke="black" d="M286.266,-35.5373C284.892,-45.3579 287.137,-54.5 293,-54.5 296.665,-54.5 298.916,-50.9289 299.753,-45.8529" />
+<polygon fill="black" stroke="black" points="303.252,-45.5307 299.734,-35.5373 296.252,-45.5439 303.252,-45.5307" />
+<text text-anchor="middle" x="293" y="-58.3" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+</g>
+</svg>
+</div>
+
+<p>Note that I’ve already started cheating with the construction of this DFA. Not every state handles all symbols in the alphabet (0 and 1). This partially defined DFA is usually easier to write and read. The usual way to make it fully defined is to add an explicit <em>stuck state</em>. All the unhandled symbols go to that state, and with any next input the DFA will stay in that state.</p>
+
+<h3 id="code-code-code">Code code code</h3>
+
+<p>In Rust we can do the partial definition of the DFA with an <code class="highlighter-rouge">Option</code> type:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="k">type</span> <span class="n">State</span> <span class="o">=</span> <span class="nb">u8</span><span class="p">;</span>
+
+<span class="k">type</span> <span class="n">Input</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">;</span>
+<span class="k">const</span> <span class="n">ZERO</span><span class="p">:</span> <span class="n">Input</span> <span class="o">=</span> <span class="k">false</span><span class="p">;</span>
+<span class="k">const</span> <span class="n">ONE</span><span class="p">:</span> <span class="n">Input</span>  <span class="o">=</span> <span class="k">true</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">transition</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">Input</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="n">State</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="k">match</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">symbol</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ONE</span><span class="p">)</span>  <span class="k">=&gt;</span> <span class="nn">Option</span><span class="p">::</span><span class="nf">Some</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ZERO</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">Option</span><span class="p">::</span><span class="nf">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">ZERO</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">Option</span><span class="p">::</span><span class="nf">Some</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">ZERO</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">Option</span><span class="p">::</span><span class="nf">Some</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">ONE</span><span class="p">)</span>  <span class="k">=&gt;</span> <span class="nn">Option</span><span class="p">::</span><span class="nf">Some</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">ONE</span><span class="p">)</span>  <span class="k">=&gt;</span> <span class="nn">Option</span><span class="p">::</span><span class="nf">Some</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span>
+    <span class="n">_</span> <span class="k">=&gt;</span> <span class="nn">Option</span><span class="p">::</span><span class="nb">None</span><span class="p">,</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">const</span> <span class="n">START</span><span class="p">:</span> <span class="n">State</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="n">FINALS</span><span class="p">:</span> <span class="p">[</span><span class="n">State</span><span class="p">;</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+
+
+<span class="k">const</span> <span class="n">INPUTS</span><span class="p">:</span> <span class="p">[</span><span class="n">Input</span><span class="p">;</span> <span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ONE</span><span class="p">,</span> <span class="n">ZERO</span><span class="p">,</span> <span class="n">ZERO</span><span class="p">,</span> <span class="n">ZERO</span><span class="p">,</span> <span class="n">ZERO</span><span class="p">,</span> <span class="n">ONE</span><span class="p">,</span> <span class="n">ONE</span><span class="p">];</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">let</span> <span class="k">mut</span> <span class="n">state</span> <span class="o">=</span> <span class="nn">Option</span><span class="p">::</span><span class="nf">Some</span><span class="p">(</span><span class="n">START</span><span class="p">);</span>
+  <span class="k">for</span> <span class="n">input</span> <span class="n">in</span> <span class="n">INPUTS</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">state</span><span class="nf">.and_then</span><span class="p">(|</span><span class="n">st</span><span class="p">|</span> <span class="nf">transition</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">input</span><span class="nf">.clone</span><span class="p">()));</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="n">state</span><span class="nf">.map_or</span><span class="p">(</span><span class="k">false</span><span class="p">,</span> <span class="p">|</span><span class="n">st</span><span class="p">|</span> <span class="n">FINALS</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.any</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">x</span><span class="p">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">st</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"The input is accepted"</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"The input is not accepted"</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre>
+</div>
+
+<p>(The crate is in this <a href="https://github.com/Apanatshka/Apanatshka.github.io/tree/master/_includes/compsci/2016/04/10/finite-automata/binary_string/">blog’s repository</a>)<br />
+So <code class="highlighter-rouge">None</code> is the stuck state and the ‘real’ states are wrapped in a <code class="highlighter-rouge">Some</code>. In this code the transitions are given as a function, not a mapping. When you generalise this into an automaton library (there <a href="https://crates.io/search?q=automaton">are</a> <a href="https://crates.io/search?q=automata">several</a> on <a href="https://crates.io/">crates.io</a>), you’re more likely to end up with a map.</p>
+
+<h3 id="memory">Memory</h3>
+
+<p>Note that DFAs are so restricted that they don’t really have mutable memory. Any kind of memory of what you’ve already seen of the input needs to be statically encoded in the states of the state machine. This can get a little awkward when you want to recognise binary strings that have a 1 as the second to last symbol:</p>
+
+<div class="graphviz-wrapper">
+
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Binary string DFA Pages: 1 -->
+<svg role="img" aria-label="Binary string DFA" width="395pt" height="322pt" viewbox="0.00 0.00 394.57 322.07">
+<title>Binary string DFA</title>
+<desc>digraph &quot;Binary string DFA&quot; { 
+layout=&quot;circo&quot;;
+bgcolor=&quot;transparent&quot;;
+rankdir=LR;
+start [shape=none, label=&quot;&quot;, width=0];
+node [shape=doublecircle, fixedsize=shape, width=0.4, mindist=2];
+q100 [label=&quot;100&quot;];
+q101 [label=&quot;101&quot;];
+q110 [label=&quot;110&quot;];
+q111 [label=&quot;111&quot;];
+node [shape=circle, fixedsize=shape, width=0.5];
+q000 [label=&quot;000&quot;];
+q001 [label=&quot;001&quot;];
+q010 [label=&quot;010&quot;];
+q011 [label=&quot;011&quot;];
+start -&gt; q000;
+q000 -&gt; q000 [label=&quot;0&quot;];
+q000 -&gt; q001 [label=&quot;1&quot;];
+q001 -&gt; q010 [label=&quot;0&quot;];
+q001 -&gt; q011 [label=&quot;1&quot;];
+q010 -&gt; q100 [label=&quot;0&quot;];
+q010 -&gt; q101 [label=&quot;1&quot;];
+q011 -&gt; q110 [label=&quot;0&quot;];
+q011 -&gt; q111 [label=&quot;1&quot;];
+q100 -&gt; q000 [label=&quot;0&quot;];
+q100 -&gt; q001 [label=&quot;1&quot;];
+q101 -&gt; q010 [label=&quot;0&quot;];
+q101 -&gt; q011 [label=&quot;1&quot;];
+q110 -&gt; q100 [label=&quot;0&quot;];
+q110 -&gt; q101 [label=&quot;1&quot;];
+q111 -&gt; q110 [label=&quot;0&quot;];
+q111 -&gt; q111 [label=&quot;1&quot;];
+ }</desc>
+
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 318.066)">
+<title>Binary string DFA</title>
+<!-- start -->
+<g id="node1" class="node"><title>start</title>
+</g>
+<!-- q000 -->
+<g id="node6" class="node"><title>q000</title>
+<ellipse fill="none" stroke="black" cx="90.5" cy="-157.283" rx="18" ry="18" />
+<text text-anchor="middle" x="90.5" y="-153.583" font-family="Times,serif" font-size="14.00">000</text>
+</g>
+<!-- start&#45;&gt;q000 -->
+<g id="edge1" class="edge"><title>start&#45;&gt;q000</title>
+<path fill="none" stroke="black" d="M1.07472,-157.283C5.71729,-157.283 37.5418,-157.283 61.9178,-157.283" />
+<polygon fill="black" stroke="black" points="62.138,-160.783 72.1379,-157.283 62.1379,-153.783 62.138,-160.783" />
+</g>
+<!-- q100 -->
+<g id="node2" class="node"><title>q100</title>
+<ellipse fill="none" stroke="black" cx="131.149" cy="-59.1486" rx="14.5" ry="14.5" />
+<ellipse fill="none" stroke="black" cx="131.149" cy="-59.1486" rx="18.5" ry="18.5" />
+<text text-anchor="middle" x="131.149" y="-55.4486" font-family="Times,serif" font-size="14.00">100</text>
+</g>
+<!-- q100&#45;&gt;q000 -->
+<g id="edge10" class="edge"><title>q100&#45;&gt;q000</title>
+<path fill="none" stroke="black" d="M124.068,-76.2424C117.831,-91.2992 108.648,-113.471 101.462,-130.819" />
+<polygon fill="black" stroke="black" points="98.0926,-129.807 97.4993,-140.385 104.56,-132.486 98.0926,-129.807" />
+<text text-anchor="middle" x="109.265" y="-107.331" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q001 -->
+<g id="node7" class="node"><title>q001</title>
+<ellipse fill="none" stroke="black" cx="131.149" cy="-255.418" rx="18" ry="18" />
+<text text-anchor="middle" x="131.149" y="-251.718" font-family="Times,serif" font-size="14.00">001</text>
+</g>
+<!-- q100&#45;&gt;q001 -->
+<g id="edge11" class="edge"><title>q100&#45;&gt;q001</title>
+<path fill="none" stroke="black" d="M131.149,-77.9677C131.149,-112.582 131.149,-186.517 131.149,-227.176" />
+<polygon fill="black" stroke="black" points="127.649,-227.227 131.149,-237.227 134.649,-227.227 127.649,-227.227" />
+<text text-anchor="middle" x="134.649" y="-141.372" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q101 -->
+<g id="node3" class="node"><title>q101</title>
+<ellipse fill="none" stroke="black" cx="327.418" cy="-255.418" rx="14.5" ry="14.5" />
+<ellipse fill="none" stroke="black" cx="327.418" cy="-255.418" rx="18.5" ry="18.5" />
+<text text-anchor="middle" x="327.418" y="-251.718" font-family="Times,serif" font-size="14.00">101</text>
+</g>
+<!-- q010 -->
+<g id="node8" class="node"><title>q010</title>
+<ellipse fill="none" stroke="black" cx="229.283" cy="-296.066" rx="18" ry="18" />
+<text text-anchor="middle" x="229.283" y="-292.366" font-family="Times,serif" font-size="14.00">010</text>
+</g>
+<!-- q101&#45;&gt;q010 -->
+<g id="edge12" class="edge"><title>q101&#45;&gt;q010</title>
+<path fill="none" stroke="black" d="M308.774,-257.493C292.845,-262.222 269.894,-271.439 252.729,-279.837" />
+<polygon fill="black" stroke="black" points="250.676,-276.958 243.388,-284.648 253.881,-283.181 250.676,-276.958" />
+<text text-anchor="middle" x="277.252" y="-257.465" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q011 -->
+<g id="node9" class="node"><title>q011</title>
+<ellipse fill="none" stroke="black" cx="368.066" cy="-157.283" rx="18" ry="18" />
+<text text-anchor="middle" x="368.066" y="-153.583" font-family="Times,serif" font-size="14.00">011</text>
+</g>
+<!-- q101&#45;&gt;q011 -->
+<g id="edge13" class="edge"><title>q101&#45;&gt;q011</title>
+<path fill="none" stroke="black" d="M334.498,-238.324C340.735,-223.267 349.919,-201.096 357.104,-183.748" />
+<polygon fill="black" stroke="black" points="360.474,-184.759 361.067,-174.181 354.006,-182.08 360.474,-184.759" />
+<text text-anchor="middle" x="342.301" y="-214.836" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q110 -->
+<g id="node4" class="node"><title>q110</title>
+<ellipse fill="none" stroke="black" cx="229.283" cy="-18.5" rx="14.5" ry="14.5" />
+<ellipse fill="none" stroke="black" cx="229.283" cy="-18.5" rx="18.5" ry="18.5" />
+<text text-anchor="middle" x="229.283" y="-14.8" font-family="Times,serif" font-size="14.00">110</text>
+</g>
+<!-- q110&#45;&gt;q100 -->
+<g id="edge14" class="edge"><title>q110&#45;&gt;q100</title>
+<path fill="none" stroke="black" d="M212.189,-25.5805C197.224,-31.7792 175.231,-40.8891 157.931,-48.055" />
+<polygon fill="black" stroke="black" points="156.275,-44.9525 148.376,-52.0129 158.954,-51.4196 156.275,-44.9525" />
+<text text-anchor="middle" x="181.56" y="-40.6177" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q110&#45;&gt;q101 -->
+<g id="edge15" class="edge"><title>q110&#45;&gt;q101</title>
+<path fill="none" stroke="black" d="M236.499,-35.9211C253.519,-77.0105 296.253,-180.179 316.479,-229.01" />
+<polygon fill="black" stroke="black" points="313.263,-230.391 320.323,-238.29 319.73,-227.712 313.263,-230.391" />
+<text text-anchor="middle" x="272.989" y="-136.265" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q111 -->
+<g id="node5" class="node"><title>q111</title>
+<ellipse fill="none" stroke="black" cx="327.418" cy="-59.1486" rx="14.5" ry="14.5" />
+<ellipse fill="none" stroke="black" cx="327.418" cy="-59.1486" rx="18.5" ry="18.5" />
+<text text-anchor="middle" x="327.418" y="-55.4486" font-family="Times,serif" font-size="14.00">111</text>
+</g>
+<!-- q111&#45;&gt;q110 -->
+<g id="edge16" class="edge"><title>q111&#45;&gt;q110</title>
+<path fill="none" stroke="black" d="M310.324,-52.0682C295.359,-45.8695 273.366,-36.7596 256.065,-29.5936" />
+<polygon fill="black" stroke="black" points="257.088,-26.229 246.51,-25.6357 254.41,-32.6962 257.088,-26.229" />
+<text text-anchor="middle" x="279.695" y="-44.6309" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q111&#45;&gt;q111 -->
+<g id="edge17" class="edge"><title>q111&#45;&gt;q111</title>
+<path fill="none" stroke="black" d="M345.069,-65.5756C354.882,-66.7753 363.918,-64.633 363.918,-59.1486 363.918,-55.7209 360.388,-53.5986 355.345,-52.7819" />
+<polygon fill="black" stroke="black" points="355.09,-49.2804 345.069,-52.7216 355.049,-56.2803 355.09,-49.2804" />
+<text text-anchor="middle" x="367.418" y="-55.4486" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q000&#45;&gt;q000 -->
+<g id="edge2" class="edge"><title>q000&#45;&gt;q000</title>
+<path fill="none" stroke="black" d="M107.396,-163.611C117.495,-165.017 127,-162.908 127,-157.283 127,-153.68 123.099,-151.519 117.64,-150.801" />
+<polygon fill="black" stroke="black" points="117.342,-147.305 107.396,-150.955 117.447,-154.304 117.342,-147.305" />
+<text text-anchor="middle" x="130.5" y="-153.583" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q000&#45;&gt;q001 -->
+<g id="edge3" class="edge"><title>q000&#45;&gt;q001</title>
+<path fill="none" stroke="black" d="M97.3955,-173.93C103.644,-189.015 112.957,-211.5 120.219,-229.032" />
+<polygon fill="black" stroke="black" points="117.159,-230.789 124.219,-238.689 123.626,-228.111 117.159,-230.789" />
+<text text-anchor="middle" x="105.307" y="-205.281" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q001&#45;&gt;q010 -->
+<g id="edge4" class="edge"><title>q001&#45;&gt;q010</title>
+<path fill="none" stroke="black" d="M147.796,-262.313C162.881,-268.562 185.366,-277.875 202.898,-285.137" />
+<polygon fill="black" stroke="black" points="201.976,-288.544 212.554,-289.137 204.655,-282.076 201.976,-288.544" />
+<text text-anchor="middle" x="171.847" y="-277.525" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q001&#45;&gt;q011 -->
+<g id="edge5" class="edge"><title>q001&#45;&gt;q011</title>
+<path fill="none" stroke="black" d="M147.808,-248.517C188.505,-231.66 293.214,-188.288 342.145,-168.02" />
+<polygon fill="black" stroke="black" points="343.526,-171.237 351.425,-164.176 340.847,-164.769 343.526,-171.237" />
+<text text-anchor="middle" x="241.477" y="-212.068" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q010&#45;&gt;q100 -->
+<g id="edge6" class="edge"><title>q010&#45;&gt;q100</title>
+<path fill="none" stroke="black" d="M222.382,-279.407C205.607,-238.907 162.573,-135.013 142.181,-85.7843" />
+<polygon fill="black" stroke="black" points="145.366,-84.326 138.305,-76.4266 138.899,-87.0048 145.366,-84.326" />
+<text text-anchor="middle" x="178.782" y="-186.395" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q010&#45;&gt;q101 -->
+<g id="edge7" class="edge"><title>q010&#45;&gt;q101</title>
+<path fill="none" stroke="black" d="M247.465,-294.127C263.392,-289.446 286.589,-280.147 303.915,-271.674" />
+<polygon fill="black" stroke="black" points="305.555,-274.766 312.853,-267.086 302.358,-268.539 305.555,-274.766" />
+<text text-anchor="middle" x="272.19" y="-286.7" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q011&#45;&gt;q110 -->
+<g id="edge8" class="edge"><title>q011&#45;&gt;q110</title>
+<path fill="none" stroke="black" d="M355.259,-144.475C331.112,-120.329 278.68,-67.8973 249.65,-38.8667" />
+<polygon fill="black" stroke="black" points="252.011,-36.2777 242.465,-31.6815 247.061,-41.2275 252.011,-36.2777" />
+<text text-anchor="middle" x="298.954" y="-95.4711" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- q011&#45;&gt;q111 -->
+<g id="edge9" class="edge"><title>q011&#45;&gt;q111</title>
+<path fill="none" stroke="black" d="M361.171,-140.636C354.998,-125.734 345.834,-103.61 338.612,-86.1738" />
+<polygon fill="black" stroke="black" points="341.682,-84.4388 334.621,-76.5395 335.214,-87.1177 341.682,-84.4388" />
+<text text-anchor="middle" x="346.391" y="-117.205" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+</g>
+</svg>
+</div>
+
+<p>We remember the last three input symbols in our states. That gives us <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mn>2</mn><mn>3</mn></msup></mrow><annotation encoding="application/x-tex">2^3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.8141079999999999em;"></span><span class="strut bottom" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathrm">2</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord mathrm">3</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span> states, an exponential relation. So with these kinds of problems, you really don’t want to design these DFAs by hand.</p>
+
+<h2 id="non-deterministic-finite-automaton-nfa">Non-deterministic Finite Automaton (NFA)</h2>
+
+<p>Non-determinism allows states to have multiple transitions per symbol. That means that when you simulate an NFA, you can be in multiple states at once. This allows us to avoid the exponential blowup of the last example:</p>
+
+<div class="graphviz-wrapper">
+
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Binary string DFA Pages: 1 -->
+<svg role="img" aria-label="Binary string DFA" width="342pt" height="78pt" viewbox="0.00 0.00 342.00 77.50">
+<title>Binary string DFA</title>
+<desc>digraph &quot;Binary string DFA&quot; { 
+bgcolor=&quot;transparent&quot;;
+rankdir=LR;
+start [shape=none, label=&quot;&quot;, width=0];
+node [shape=doublecircle, fixedsize=shape, width=0.4, mindist=2];
+q4 [label=&quot;1..&quot;];
+node [shape=circle, fixedsize=shape, width=0.5];
+q1 [label=&quot;...&quot;];
+q2 [label=&quot;..1&quot;];
+q3 [label=&quot;.1.&quot;];
+start -&gt; q1;
+q1 -&gt; q1 [label=&quot;0,1&quot;];
+q1 -&gt; q2 [label=&quot;1&quot;];
+q2 -&gt; q3 [label=&quot;0,1&quot;];
+q3 -&gt; q4 [label=&quot;0,1&quot;];
+ }</desc>
+
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 73.5)">
+<title>Binary string DFA</title>
+<!-- start -->
+<g id="node1" class="node"><title>start</title>
+</g>
+<!-- q1 -->
+<g id="node3" class="node"><title>q1</title>
+<ellipse fill="none" stroke="black" cx="56" cy="-18.5" rx="18" ry="18" />
+<text text-anchor="middle" x="56" y="-14.8" font-family="Times,serif" font-size="14.00">...</text>
+</g>
+<!-- start&#45;&gt;q1 -->
+<g id="edge1" class="edge"><title>start&#45;&gt;q1</title>
+<path fill="none" stroke="black" d="M1.15491,-18.5C2.67247,-18.5 15.0966,-18.5 27.6277,-18.5" />
+<polygon fill="black" stroke="black" points="27.9419,-22.0001 37.9419,-18.5 27.9418,-15.0001 27.9419,-22.0001" />
+</g>
+<!-- q4 -->
+<g id="node2" class="node"><title>q4</title>
+<ellipse fill="none" stroke="black" cx="315.5" cy="-18.5" rx="14.5" ry="14.5" />
+<ellipse fill="none" stroke="black" cx="315.5" cy="-18.5" rx="18.5" ry="18.5" />
+<text text-anchor="middle" x="315.5" y="-14.8" font-family="Times,serif" font-size="14.00">1..</text>
+</g>
+<!-- q1&#45;&gt;q1 -->
+<g id="edge2" class="edge"><title>q1&#45;&gt;q1</title>
+<path fill="none" stroke="black" d="M49.6208,-35.5373C48.3189,-45.3579 50.4453,-54.5 56,-54.5 59.4717,-54.5 61.6042,-50.9289 62.3975,-45.8529" />
+<polygon fill="black" stroke="black" points="65.8971,-45.531 62.3792,-35.5373 58.8971,-45.5435 65.8971,-45.531" />
+<text text-anchor="middle" x="56" y="-58.3" font-family="Times,serif" font-size="14.00">0,1</text>
+</g>
+<!-- q2 -->
+<g id="node4" class="node"><title>q2</title>
+<ellipse fill="none" stroke="black" cx="135" cy="-18.5" rx="18" ry="18" />
+<text text-anchor="middle" x="135" y="-14.8" font-family="Times,serif" font-size="14.00">..1</text>
+</g>
+<!-- q1&#45;&gt;q2 -->
+<g id="edge3" class="edge"><title>q1&#45;&gt;q2</title>
+<path fill="none" stroke="black" d="M74.0888,-18.5C83.659,-18.5 95.8172,-18.5 106.677,-18.5" />
+<polygon fill="black" stroke="black" points="106.959,-22.0001 116.959,-18.5 106.959,-15.0001 106.959,-22.0001" />
+<text text-anchor="middle" x="95.5" y="-22.3" font-family="Times,serif" font-size="14.00">1</text>
+</g>
+<!-- q3 -->
+<g id="node5" class="node"><title>q3</title>
+<ellipse fill="none" stroke="black" cx="225" cy="-18.5" rx="18" ry="18" />
+<text text-anchor="middle" x="225" y="-14.8" font-family="Times,serif" font-size="14.00">.1.</text>
+</g>
+<!-- q2&#45;&gt;q3 -->
+<g id="edge4" class="edge"><title>q2&#45;&gt;q3</title>
+<path fill="none" stroke="black" d="M153.386,-18.5C165.76,-18.5 182.631,-18.5 196.78,-18.5" />
+<polygon fill="black" stroke="black" points="196.95,-22.0001 206.95,-18.5 196.95,-15.0001 196.95,-22.0001" />
+<text text-anchor="middle" x="180" y="-22.3" font-family="Times,serif" font-size="14.00">0,1</text>
+</g>
+<!-- q3&#45;&gt;q4 -->
+<g id="edge5" class="edge"><title>q3&#45;&gt;q4</title>
+<path fill="none" stroke="black" d="M243.064,-18.5C255.392,-18.5 272.316,-18.5 286.597,-18.5" />
+<polygon fill="black" stroke="black" points="286.883,-22.0001 296.883,-18.5 286.883,-15.0001 286.883,-22.0001" />
+<text text-anchor="middle" x="270" y="-22.3" font-family="Times,serif" font-size="14.00">0,1</text>
+</g>
+</g>
+</svg>
+</div>
+
+<p>Although this NFA is easier to describe, it’s still always translatable to a DFA. This translation algorithm is called powerset construction or subset construction. The powerset of a set is the set of all combinations: <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mrow><mi mathvariant="double-struck">P</mi></mrow><mo>(</mo><mo>{</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo>}</mo><mo>)</mo><mo>=</mo><mo>{</mo><mi mathvariant="normal">∅</mi><mo separator="true">,</mo><mo>{</mo><mn>0</mn><mo>}</mo><mo separator="true">,</mo><mo>{</mo><mn>1</mn><mo>}</mo><mo separator="true">,</mo><mo>{</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo>}</mo><mo>}</mo></mrow><annotation encoding="application/x-tex">\mathbb{P}(\{0,1\}) = \{\emptyset, \{0\}, \{1\}, \{0,1\}\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathbb">P</span></span><span class="mopen">(</span><span class="mopen">{</span><span class="mord mathrm">0</span><span class="mpunct">,</span><span class="mord mathrm">1</span><span class="mclose">}</span><span class="mclose">)</span><span class="mrel">=</span><span class="mopen">{</span><span class="mord mathrm">∅</span><span class="mpunct">,</span><span class="mopen">{</span><span class="mord mathrm">0</span><span class="mclose">}</span><span class="mpunct">,</span><span class="mopen">{</span><span class="mord mathrm">1</span><span class="mclose">}</span><span class="mpunct">,</span><span class="mopen">{</span><span class="mord mathrm">0</span><span class="mpunct">,</span><span class="mord mathrm">1</span><span class="mclose">}</span><span class="mclose">}</span></span></span></span></p>
+
+<h3 id="powerset-construction">Powerset construction</h3>
+
+<ol>
+  <li>The <em>alphabet</em> stays the same.</li>
+  <li>We use the powerset of the states of the NFA to create the states for the DFA. (That’s where the exponential blowup comes from, <strong>if</strong> all those states are used.) The state with the <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="normal">∅</mi></mrow><annotation encoding="application/x-tex">\emptyset</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:0.80556em;vertical-align:-0.05556em;"></span><span class="base textstyle uncramped"><span class="mord mathrm">∅</span></span></span></span> is the <em>stuck state</em> that we already saw earlier.</li>
+  <li>The transitions are based on the simulation of the NFA. So if you are in <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>{</mo><msub><mi>q</mi><mi>o</mi></msub><mo separator="true">,</mo><msub><mi>q</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>q</mi><mn>3</mn></msub><mo>}</mo></mrow><annotation encoding="application/x-tex">\{q_o, q_1, q_3\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mopen">{</span><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">o</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">1</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">3</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">}</span></span></span></span> then the transition with symbol <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>σ</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">\sigma_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">σ</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">2</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span> takes you to the state in the DFA that is labelled with states of the NFA that are reachable with <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>σ</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">\sigma_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">σ</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">2</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span> from the states <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>q</mi><mi>o</mi></msub></mrow><annotation encoding="application/x-tex">q_o</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">o</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span>, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>q</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">q_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">1</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span> and <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>q</mi><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">q_3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">3</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span>.</li>
+  <li>The start state is still the same although now called <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>{</mo><msub><mi>q</mi><mi>o</mi></msub><mo>}</mo></mrow><annotation encoding="application/x-tex">\{q_o\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mopen">{</span><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">o</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">}</span></span></span></span> instead of <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>q</mi><mi>o</mi></msub></mrow><annotation encoding="application/x-tex">q_o</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">o</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span>.</li>
+  <li>The final states are every state that has an NFA final state in its set.</li>
+</ol>
+
+<h3 id="epsilon-moves">Epsilon moves</h3>
+
+<p>The empty string is referred to with the greek letter <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>. If you allow transitions in an NFA to be labelled with <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>, you get the NFA-<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span> type of automata. This changes the powerset construction slightly, because an <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span> move from the start state in the NFA <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>q</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">q_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">0</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span> means that the start state of the DFA will be one of the compound states <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>{</mo><msub><mi>q</mi><mn>0</mn></msub><mo separator="true">,</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo>}</mo></mrow><annotation encoding="application/x-tex">\{q_0, ...\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mopen">{</span><span class="mord"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.03588em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">0</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord mathrm">.</span><span class="mord mathrm">.</span><span class="mord mathrm">.</span><span class="mclose">}</span></span></span></span>. This class of automata is still not more powerful than the NFA or DFA. But it <em>is</em> useful for the definition of the basic regular expression operators.</p>
+
+<h3 id="regular-expressions">Regular expressions</h3>
+
+<p>Now just to warn you: regular expressions in programming were once based on this automata theory, but have since been made much more powerful. Regex can describe much more than just <em>regular</em> languages.</p>
+
+<p><strong>The basics</strong> Ok, say you have an empty regular expression. That’s an NFA with one state, the start state, which is also a final state. It only recognises <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>. <br />
+A regular expression that matches exactly <code class="highlighter-rouge">1</code> is the same as an NFA with two states, the start state, and a separate final state with a transition in between labelled with <code class="highlighter-rouge">1</code>.</p>
+
+<p><strong>Option</strong> Let’s take two regular expressions put an ‘or’ (<code class="highlighter-rouge">|</code>) in between. If either one matches, the whole regex matches. If we have two NFA equivalents, we can make a new start state and <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>-transitions to the two old start states.</p>
+
+<p><strong>Concatenation</strong> Let’s take two regular expressions and stick them together, one after the other. In NFA-land that means that the final states of the first NFA become normal states with <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>-transitions to the start state of the second NFA.</p>
+
+<p><strong>Kleene Star</strong> This is the <code class="highlighter-rouge">*</code> in a regular expression, a zero-or-more. With this and the option, you can make a one-or-more (<code class="highlighter-rouge">+</code>). The way this works in NFA-land is as follows: Create a new start state, which is a final state, and give it an <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>-transition to the old start state (the zero part). Give the old final states <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span>-transitions to the old start state (the more part).</p>
+
+<h3 id="limitations-and-non-regular-languages">Limitations and Non-regular languages</h3>
+
+<p>Say you want to recognise binary strings that starts with any number of zeroes, but then is followed by an equal number of ones. Because the number of zeroes is unbounded, we cannot use a finite number of states to count how many zeroes we’ve seen so far, to match with the amount of ones to come. Basically, it’s impossible to use DFAs or NFAs to recognise ‘words’ of this language.</p>
+
+<p>More generally you can prove languages non-regular with the <a href="https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages">pumping lemma for regular languages</a>. I don’t have a super-intuitive way of explaining the pumping lemma, so if you want to know more, try reading the theory on it.</p>
+
+<h1 id="ps">P.S.</h1>
+
+<p>Next blog post we’ll look at context-free languages, which is a superset of the regular languages. They can be described with context-free grammars (which you may know from the definitions of programming language syntax) and which you can recognise with an automaton that has a single stack for memory.</p>
+
+<p>I was going to write some more Rust code for you to look at, like a generally usable automaton library and the powerset construction. But this post has taken so long, it is already long, and there are Rust crates available with that kind of stuff… So, whatever ¯\_(ツ)_/¯</p>
+
+  </article>
+
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Whatever</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li><a href="mailto:jeff.smits@gmail.com">jeff.smits@gmail.com</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/Apanatshka">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+                </svg>
+              </span>
+
+              <span class="username">Apanatshka</span>
+            </a>
+          </li>
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">A web log. Mostly about computer science-y stuff. 
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
