@@ -6,6 +6,8 @@ category: CompSci
 tags:     [theory, automata, computation, nfa, dfa, regular expression]
 ---
 
+[*Edited on: {{ "2016-04-17" | date: "%b %-d, %Y" }}*](#addendum)
+
 What do Turing machines and regular expressions have in common? One is a theoretical model of a computer, and can be used to prove that some things cannot be computed. The other is a practical tool for matching strings. And yet they are both based on a simple *computational model*: a (very constrained) finite state machine (FSM). 
 
 In this blog post we'll go over the basics of this type of FSM and instead of going over proofs, we'll go over examples and little implementations in Rust. For more information about this blog post series, see [this announcement post]({% post_url 2016-03-28-theory-of-computation %}). 
@@ -145,14 +147,37 @@ A regular expression that matches exactly `1` is the same as an NFA with two sta
 
 **Kleene Star** This is the `*` in a regular expression, a zero-or-more. With this and the option, you can make a one-or-more (`+`). The way this works in NFA-land is as follows: Create a new start state, which is a final state, and give it an {%latex%}\varepsilon{%endlatex%}-transition to the old start state (the zero part). Give the old final states {%latex%}\varepsilon{%endlatex%}-transitions to the old start state (the more part). 
 
-### Limitations and Non-regular languages
+## Limitations and Non-regular languages
 
 Say you want to recognise binary strings that starts with any number of zeroes, but then is followed by an equal number of ones. Because the number of zeroes is unbounded, we cannot use a finite number of states to count how many zeroes we've seen so far, to match with the amount of ones to come. Basically, it's impossible to use DFAs or NFAs to recognise 'words' of this language. 
 
-More generally you can prove languages non-regular with the [pumping lemma for regular languages](https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages). I don't have a super-intuitive way of explaining the pumping lemma, so if you want to know more, try reading the theory on it. 
+More generally you can prove languages non-regular with the [pumping lemma for regular languages](https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages). I don't have a super-intuitive way of explaining the pumping lemma, so if you want to know more, try reading the theory on it. *(Or do I? See the [Addendum](#addendum)!)*
 
 # P.S.
 
 Next blog post we'll look at context-free languages, which is a superset of the regular languages. They can be described with context-free grammars (which you may know from the definitions of programming language syntax) and which you can recognise with an automaton that has a single stack for memory. 
 
 I was going to write some more Rust code for you to look at, like a generally usable automaton library and the powerset construction. But this post has taken so long, it is already long, and there are Rust crates available with that kind of stuff... So, whatever ¯\\\_(ツ)\_/¯
+
+<hr/>
+<hr/>
+
+# Addendum
+
+*{{ "2016-04-17" | date: "%b %-d, %Y" }}*
+
+## Non-regularity and the pumping lemma
+
+Most of the examples I've seen of non-regular languages have some form of unbounded counting in them. But if you have a different language that doesn't seem to fit, you can try to prove it non-regular too. The usual way to prove that a language is not regular, is to show that the [pumping lemma for regular languages](https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages) doesn't hold for the language. The pumping lemma is a property that all regular languages have (though there are some non-regular languages which are have this property). The basic idea is this:
+
+1. Your language either consists of a finite set of words, and is therefore regular, or it consists of an infinite set. (The finite set means you can just union the DFAs for every separate word. )
+2. With an infinite set of words, and a finite alphabet, you'll have words that have more symbols in them than your language's DFA has states. That means the DFA has to loop somewhere. 
+3. Every word in your language that is longer and uses a loop has three parts: the part before the loop, the part in the loop and the part after the loop. Such a word is part of an infinite class of words where you can repeat the middle part however many times you like. 
+
+To prove that a language doesn't have this *pumping length* from the lemma, you need to be pretty abstract and use a cleverly chosen word. So if you want to write such a proof and haven't done it before, I advise you to look up some examples!
+
+*Thanks to [/u/so_you_like_donuts](https://www.reddit.com/user/so_you_like_donuts) for giving an [intuitive description of the pumping lemma](https://www.reddit.com/r/rust/comments/4eq01l/my_first_blog_post_finite_automata_with_a_bit_of/d22bw6q?context=3) which drove me to write this addendum.*
+
+## Next post
+
+I had another week to read other blog posts, including an excellent one about [automata in rust for string indexes](http://blog.burntsushi.net/transducers/) and now I feel bad for not giving you the Rust code for every algorithm I explained. So, I might just postpone the blog post about context-free languages and dive into regex first. I doubt I'll do better than the existing [regex crate](https://crates.io/crates/regex), but, you know, whatever ¯\\\_(ツ)\_/¯
