@@ -35,7 +35,8 @@ namespace :git do
   desc "Deploy to remote origin"
   task :deploy => [:check_branch, :check_git] do
     puts "Building Jekyll site"
-    system "jekyll build"
+    system "bundle install --binstubs=_bin"
+    system "_bin/jekyll build --incremental"
 
     system "git checkout #{DEPLOY_BRANCH}"
 
