@@ -185,9 +185,83 @@ Of course the other way around also works, start with the start variable and exp
 
 ### Code
 
+Let's start with a bit of code to define context-free grammars in Rust:
+
+```rust
+{% include {{page.id}}/context_free_grammar/src/main.rs %}
+```
+
+Output (with a few newlines added manually for your reading comfort):
+
+```
+S -> [[Lit { literal: "0" }, Srt { sort: S }, Lit { literal: "0" }], 
+[Lit { literal: "1" }, Srt { sort: S }, Lit { literal: "1" }], 
+[Epsilon]]
+```
+
+If you're wondering why I didn't write the code for the derivation of the binary string as shown earlier, that's because it requires 'angelic non-determinism'. That's an oracle that tells you which rule to pick when there are multiple. Those are pretty hard to come by ;)
+
 ### Translation to PDA
 
-Now CFGs equally powerful as the PDA. That means that like with regular expressions and DFAs, we can translate from one to the other. 
+Now CFGs equally powerful as the PDA. That means that like with regular expressions and DFAs, we can translate from one to the other. Let's do the grammar to automaton first, since you're more likely to write a grammar that you want to execute than the other way around. The idea is that you have a PDA with an EOS symbol and the start sort. Then you get to the 'central' state in the PDA. This state replaces the topmost sort on the stack with the *reversed* body of one of it's rules (non-deterministically of course). If the topmost thing on the stack is a terminal instead, it will match the input against the terminal and drop both. Because the rule body was pushed on the stack in reverse that works out. When the EOS symbol is found and the input is found we go to the accept state. 
+
+Let's look at the PDA for the binary palindrome grammar:
+
+{% digraph Even-length binary palindromes, translated from the grammar %}
+bgcolor="transparent";
+rankdir=LR;
+node [shape=circle, fixedsize=shape, width=0.5];
+start [shape=none, label="", width=0];
+q₁ [shape=doublecircle, width=0.4];
+start -> q₀ [label="$ S"];
+q₀ -> q₁ [label="ε, $ → ε\nε, $ S → ε"];
+q₀ -> q₀ [label="ε, S → 0 S 0\nε, S → 1 S 1\nε, S → ε\n0, 0 →ε\n1, 1 → ε"];
+{% enddigraph %}
+
+I went for the PDA which starts with an initialised stack and can add/remove multiple things from the stack at once. That gives a more compact PDA, and is also closer to an implementable state. Sadly this example doesn't visibly show that the bodies of the rules are reversed because they are symmetrical. 
+
+It's interesting to me to see that this PDA is actually smaller in states than our hand-written one. But this one does have some more overhead because it's pushing a lot of stuff on the stack including sorts. Let's see if we can reduce that overhead a little by at least making the transitions that don't consume any input into transitions that do. For that we need to merge a rule like {%latex%}\varepsilon, S \rightarrow 0 S 0{%endlatex%} with other rules that will come afterwards which do consume input. That's {%latex%}0, 0 \rightarrow \varepsilon{%endlatex%} in this case. So combining the two rules gets us {%latex%}0, S \rightarrow 0 S{%endlatex%}, by adding the input symbol consumption and resolving the stack pop. We can do the same with the other transition that takes no input. The last rule to resolve is {%latex%}\epsilon, S \rightarrow \varepsilon{%endlatex%}. This one can be merged with {%latex%}\epsilon, S \rightarrow 0 S 0{%endlatex%} and {%latex%}0, 0 \rightarrow \varepsilon{%endlatex%} to form {%latex%}0, S \rightarrow 0{%endlatex%} and with the other two transitions to form {%latex%}1, S \rightarrow 1{%endlatex%}. 
+
+{% digraph Even-length binary palindromes, translated from the grammar %}
+bgcolor="transparent";
+rankdir=LR;
+node [shape=circle, fixedsize=shape, width=0.5];
+start [shape=none, label="", width=0];
+q₁ [shape=doublecircle, width=0.4];
+start -> q₀ [label="$ S"];
+q₀ -> q₁ [label="ε, $ → ε\nε, $ S → ε"];
+q₀ -> q₀ [label="0, S → 0 S\n1, S → 1 S\n0, S → 0\n1, S → 1\n0, 0 →ε\n1, 1 → ε"];
+{% enddigraph %}
+
+Now the sort {%latex%}S{%endlatex%} has been changed from a fairly useless overhead to a marker of "we're not halfway yet". In our hand-written PDA this was not a symbol on the stack but a different state. 
+
+When you implement this PDA you get an output that shows that his PDA has one redundant state that it's always in:
+
+```
+[(0, [2, 3]), (1, [])]
+[(0, [2, 0, 3]), (0, [2, 0])]
+[(0, [2, 0, 0, 3]), (0, [2, 0, 0]), (0, [2])]
+[(0, [2, 0, 0, 1, 3]), (0, [2, 0, 0, 1])]
+[(0, [2, 0, 0, 1, 0, 3]), (0, [2, 0, 0, 1, 0])]
+[(0, [2, 0, 0, 1, 0, 1, 3]), (0, [2, 0, 0, 1, 0, 1])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 3]), (0, [2, 0, 0, 1, 0, 1, 0])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1]), (0, [2, 0, 0, 1, 0, 1, 0])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1]), (0, [2, 0, 0, 1, 0, 1, 0, 1])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1]), (0, [2, 0, 0, 1, 0, 1, 0])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0]), (0, [2, 0, 0, 1, 0, 1])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1]), (0, [2, 0, 0, 1, 0])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0]), (0, [2, 0, 0, 1])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1]), (0, [2, 0, 0])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0]), (0, [2, 0])]
+[(0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 3]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0]), (0, [2, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1]), (0, [2])]
+[(1, [])]
+The input is accepted
+```
+
+This redundant state comes from the two rules that don't re-add the {%latex%}S{%endlatex%}. These rules basically try to predict at every point in the input that this was the last input symbol of the first half, which most of the time isn't going to be true. We could change them to instead predict that this was first input symbol of the second half, which can only happen when the second value on top of the stack is the same as this input symbol: {%latex%}0, 0 S \rightarrow \varepsilon{%endlatex%}. 
+
+We're going to skip translating PDAs to CFGs, as that's a less interesting thing to do in my opinion. It shows that PDAs aren't more powerful than CFGs, but isn't used for something practical as far as I know. So it's enough to know that someone else has proven this property. 
 
 ### Ambiguity
 
