@@ -1,7 +1,7 @@
 ---
 layout:   post
 title:    "Pushy Automata"
-date:     2016-04-27
+date:     2016-05-15
 category: CompSci
 tags:     [theory, automata, computation, push-down automata, stack, context-free languages, context-free grammar, context-free]
 ---
