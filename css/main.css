@@ -22,12 +22,18 @@ body {
   background-color: #fdfdfd;
   -webkit-text-size-adjust: 100%; }
 
+hr {
+  margin: 0 0 1px 0;
+  border-width: 0 0 1px 0;
+  border-style: solid; }
+
 /**
  * Set `margin-bottom` to maintain vertical rhythm
  */
 h1, h2, h3, h4, h5, h6,
 p, blockquote, pre,
 ul, ol, dl, figure,
+table,
 .highlight {
   margin-bottom: 15px; }
 
