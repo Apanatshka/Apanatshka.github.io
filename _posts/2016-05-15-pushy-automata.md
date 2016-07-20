@@ -43,7 +43,7 @@ q₁ -> q₁ [label="0, ε → 0"];
 q₂ -> q₂ [label="1, 0 → ε"];
 {% enddigraph %}
 
-So what's happening here? The transitions now have a lot more than than just the input symbol being consumed. After the comma is the top stack symbol that's popped, and after the arrow is the new stack symbol to be pushed. If you look at {%latex%}q_1{%endlatex%}, it is taking {%latex%}0{%endlatex%}'s off the input and pushed them onto the stack. Then it takes in as many {%latex%}1{%endlatex%}'s as {%latex%}0{%endlatex%}'s, by popping a {%latex%}0{%endlatex%} off the stack for every {%latex%}1{%endlatex%} in the input. 
+So what's happening here? The transitions now have a lot more than than just the input symbol being consumed. After the comma is the top stack symbol that's popped, and after the arrow is the new stack symbol to be pushed. If you look at {%latex%}q_1{%endlatex%}, it is taking {%latex%}0{%endlatex%}'s off the input and pushed them onto the stack. Then it takes in as many {%latex%}1{%endlatex%}'s as {%latex%}0{%endlatex%}'s, by popping a {%latex%}0{%endlatex%} off the stack for every {%latex%}1{%endlatex%} in the input.  
 The outer states are only there to make sure we have a fully empty stack before we go into a final state. The {%latex%}\${%endlatex%} is usually used as an *End Of Stack* character. You can also change the definition of the PDA to already hold 1 character on the stack at the start. This is part of the definition as you find it on [Wikipedia](https://en.wikipedia.org/wiki/Pushdown_automaton#Formal_definition). 
 
 ## Determinism
@@ -86,7 +86,7 @@ If you think about it, it makes sense that a non-deterministic PDA is more power
 
 ## Code
 
-These PDAs are a bit annoying to write as is. Epsilons for the input character mean that we're not advancing the input. We could write a direct encoding of the formal definition, but then we need to resolve epsilons at runtime. The execution would become pull-based, asking for input and the top of the stack when we need it. Somehow that feels wrong to me. 
+These PDAs are a bit annoying to write as is. Epsilons for the input character mean that we're not advancing the input. We could write a direct encoding of the formal definition, but then we need to resolve epsilons at runtime. The execution would become pull-based, asking for input and the top of the stack when we need it. Somehow that feels wrong to me.  
 So instead we're going to adapt our definition of PDAs, so that we can write code that's still driven by the input. Let's see if we can eliminate epsilons in the input position. There are five cases:
 
 - Add something to the stack at the start
@@ -156,7 +156,7 @@ Something to note is that the amount of `(state, stack)` tuples peaks at 3 and i
 
 # Context-free grammars
 
-A context-free grammar (CFG) has consists of rules which are sometimes called production rules or substitution rules. Those names are basically two ways to look at the grammar: as a way to produce 'sentences' of the language that the grammar describes, or to reduce input to check if it's part of the language. 
+A context-free grammar (CFG) has consists of rules which are sometimes called production rules or substitution rules. Those names are basically two ways to look at the grammar: as a way to produce 'sentences' of the language that the grammar describes, or to reduce input to check if it's part of the language.  
 These rules are written with terminals (symbols from the alphabet), and sorts (or grammar variables or non-terminals). A sort is defined by one or more rules. Depending on the grammar formalism, you may see {%latex%}\leftarrow{%endlatex%}, {%latex%}\rightarrow{%endlatex%}, {%latex%}={%endlatex%} or {%latex%}::={%endlatex%} between the sort and the body of the rule. Let's look at an example:
 
 :- | :-
@@ -259,7 +259,7 @@ When you [implement](https://github.com/Apanatshka/Apanatshka.github.io/tree/jek
 The input is accepted
 ```
 
-This redundant state comes from the two rules that don't re-add the {%latex%}S{%endlatex%}. These rules basically try to predict at every point in the input that this was the last input symbol of the first half, which most of the time isn't going to be true. We could change them to instead predict that this was first input symbol of the second half, which can only happen when the second value on top of the stack is the same as this input symbol: {%latex%}0, 0 S \rightarrow \varepsilon{%endlatex%}. 
+This redundant state comes from the two rules that don't re-add the {%latex%}S{%endlatex%}. These rules basically try to predict at every point in the input that this was the last input symbol of the first half, which most of the time isn't going to be true. We could change them to instead predict that this was first input symbol of the second half, which can only happen when the second value on top of the stack is the same as this input symbol: {%latex%}0, 0 S \rightarrow \varepsilon{%endlatex%}.  
 This rule without the overhead is just a simple combination of the old rules {%latex%}\varepsilon, S \rightarrow \varepsilon{%endlatex%} and {%latex%}0, 0 \rightarrow \varepsilon{%endlatex%}. It's only because we combined with the third rule {%latex%}\varepsilon, S \rightarrow 0 S 0{%endlatex%} that we ended up in a sub-optimal situation.[^1] At this point it's pretty clear that instead of push and popping two things of which the second is the {%latex%}S{%endlatex%}, can also be expressed as just another state. 
 
 We're going to skip translating PDAs to CFGs, as that's a less interesting thing to do in my opinion. It shows that PDAs aren't more powerful than CFGs, but isn't used for something practical as far as I know. So---at least for me---it's enough to know that someone else has proven this property. 

@@ -18,7 +18,7 @@ We'll start with the simplest, most restricted version of our FSMs. These are gr
 
 ## Deterministic Finite Automaton (DFA)
 
-DFAs are FSMs (*automata*) that work on a *finite* input and give a boolean output. *True* means the input was recognised as part of the 'language' that the DFA encodes, *false* means it is not part of the language. *Deterministic* automata define all their (*finite* amount of) states and *exactly one* transition for every possible pair of state and input. 
+DFAs are FSMs (*automata*) that work on a *finite* input and give a boolean output. *True* means the input was recognised as part of the 'language' that the DFA encodes, *false* means it is not part of the language. *Deterministic* automata define all their (*finite* amount of) states and *exactly one* transition for every possible pair of state and input.  
 The way you formally describe a DFA is by defining:
 
 1. the allowable input symbols (or *alphabet* {%latex%}\Sigma{%endlatex%}), 
@@ -56,7 +56,7 @@ In Rust we can do the partial definition of the DFA with an `Option` type:
 {% include {{page.id}}/binary_string/src/main.rs %}
 ```
 
-(The crate is in this [blog's repository](https://github.com/Apanatshka/Apanatshka.github.io/tree/jekyll/_includes{{page.id}}/binary_string/))
+(The crate is in this [blog's repository](https://github.com/Apanatshka/Apanatshka.github.io/tree/jekyll/_includes{{page.id}}/binary_string/))  
 So `None` is the stuck state and the 'real' states are wrapped in a `Some`. In this code the transitions are given as a function, not a mapping. When you generalise this into an automaton library (there [are](https://crates.io/search?q=automaton) [several](https://crates.io/search?q=automata) on [crates.io](https://crates.io/)), you're more likely to end up with a map. 
 
 ### Memory
@@ -138,7 +138,7 @@ The empty string is referred to with the greek letter {%latex%}\varepsilon{%endl
 
 Now just to warn you: regular expressions in programming were once based on this automata theory, but have since been made much more powerful. Regex can describe much more than just *regular* languages. 
 
-**The basics** Ok, say you have an empty regular expression. That's an NFA with one state, the start state, which is also a final state. It only recognises {%latex%}\varepsilon{%endlatex%}. 
+**The basics** Ok, say you have an empty regular expression. That's an NFA with one state, the start state, which is also a final state. It only recognises {%latex%}\varepsilon{%endlatex%}.  
 A regular expression that matches exactly `1` is the same as an NFA with two states, the start state, and a separate final state with a transition in between labelled with `1`. 
 
 **Option** Let's take two regular expressions put an 'or' (`|`) in between. If either one matches, the whole regex matches. If we have two NFA equivalents, we can make a new start state and {%latex%}\varepsilon{%endlatex%}-transitions to the two old start states. 
@@ -171,7 +171,7 @@ I was going to write some more Rust code for you to look at, like a generally us
 Most of the examples I've seen of non-regular languages have some form of unbounded counting in them. But if you have a different language that doesn't seem to fit, you can try to prove it non-regular too. The usual way to prove that a language is not regular, is to show that the [pumping lemma for regular languages](https://en.wikipedia.org/wiki/Pumping_lemma_for_regular_languages) doesn't hold for the language. The pumping lemma is a property that all regular languages have (though there are some non-regular languages which are have this property). The basic idea is this:
 
 1. Your language either consists of a finite set of words, and is therefore regular, or it consists of an infinite set. (The finite set means you can just union the DFAs for every separate word. )
-2. With an infinite set of words, and a finite alphabet, you'll have words that have more symbols in them than your language's DFA has states. That means the DFA has to loop somewhere. 
+2. With an infinite set of words, and a finite alphabet, you'll have words that have more symbols in them than your language's DFA has states. That means the DFA has to loop somewhere.  
 3. Every word in your language that is longer and uses a loop has three parts: the part before the loop, the part in the loop and the part after the loop. Such a word is part of an infinite class of words where you can repeat the middle part however many times you like. 
 
 To prove that a language doesn't have this *pumping length* from the lemma, you need to be pretty abstract and use a cleverly chosen word. So if you want to write such a proof and haven't done it before, I advise you to look up some examples!
