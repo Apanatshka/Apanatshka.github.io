@@ -237,7 +237,7 @@ Now the sort {%latex%}S{%endlatex%} has been changed from a fairly useless overh
 
 When you [implement](https://github.com/Apanatshka/Apanatshka.github.io/tree/jekyll/_includes{{page.id}}/binary_palindrome/src/grammar_based.rs) this PDA you get an output that shows that there is one redundant state that it's always in:
 
-```
+```rust
 [(0, [2, 3]), (1, [])]
 [(0, [2, 0, 3]), (0, [2, 0])]
 [(0, [2, 0, 0, 3]), (0, [2, 0, 0]), (0, [2])]
