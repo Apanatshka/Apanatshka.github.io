@@ -10,7 +10,7 @@ This is just a short post about my new terminal setup. I think it's both pretty 
 
 ![A Zsh terminal, with the powerlevel9k theme (default settings), and the Gogh Aci colour scheme on the font Source Code Pro]({{url}}/images{{page.id}}/iterm2_gogh_aci_source_code_pro_zsh_powerlevel9k.png)
 
-Skip to the [end](#tldr) for terse instructions/commands for mac and linux. I don't develop on windows, but I think you can probably reuse most of these instructions if you can get a posix terminal emulator. 
+Skip to the [end](#tldr) for terse instructions/commands for mac and linux. 
 
 ## Terminal
 
@@ -136,3 +136,7 @@ I use the font Source Code Pro in my terminal. The theme does require special sy
    echo "DEFAULT_USER='$USER'
    " | cat - ~/.zshrc > /tmp/out && mv /tmp/out ~/.zshrc
    ```
+
+## Windows 
+
+Sorry, but I don't develop on windows. I think you can probably reuse most of these instructions if you can get a proper terminal emulator. Or you could switch to a linux or whatever ¯\\\_(ツ)\_/¯
