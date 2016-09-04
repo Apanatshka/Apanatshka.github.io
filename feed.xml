@@ -6,9 +6,140 @@
 </description>
     <link>http://Apanatshka.github.io/</link>
     <atom:link href="http://Apanatshka.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sat, 23 Jul 2016 10:47:39 +0100</pubDate>
-    <lastBuildDate>Sat, 23 Jul 2016 10:47:39 +0100</lastBuildDate>
-    <generator>Jekyll v3.1.6</generator>
+    <pubDate>Sun, 04 Sep 2016 13:54:52 +0100</pubDate>
+    <lastBuildDate>Sun, 04 Sep 2016 13:54:52 +0100</lastBuildDate>
+    <generator>Jekyll v3.2.1</generator>
+    
+      <item>
+        <title>Porting cargo benchcmp</title>
+        <description>&lt;p&gt;&lt;strong&gt;TL;DR:&lt;/strong&gt; I’ve ported the tool &lt;a href=&quot;https://crates.io/crates/cargo-benchcmp&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;cargo-benchcmp&lt;/code&gt;&lt;/a&gt; from &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/blob/1d23dec5dd3abe3939cfea030162a7dc6461e544/cargo-benchcmp&quot;&gt;Python&lt;/a&gt; to &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp&quot;&gt;Rust&lt;/a&gt; and added some functionality. There is more to come which is mostly waiting for review in &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/pulls&quot;&gt;pull requests&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;I’ve been messing around with Rust for a while now, and I found a little utility called &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;cargo-benchcmp&lt;/code&gt;&lt;/a&gt; by the famous &lt;a href=&quot;http://blog.burntsushi.net/about/&quot;&gt;BurntSushi (Andrew Gallant)&lt;/a&gt;. You may have seen the benchmark comparisons in one of his &lt;a href=&quot;http://blog.burntsushi.net/transducers/&quot;&gt;blogposts&lt;/a&gt; already. I found out that the utility was a nice &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/blob/1d23dec5dd3abe3939cfea030162a7dc6461e544/cargo-benchcmp&quot;&gt;single file Python script&lt;/a&gt;. Not a quick and dirty hack, but classes and a few docstrings. I was already messing around with some of my own rust code where I wanted to do a comparison between benchmarks, so that’s great. But the tool only worked with comparison of the same tests over time, and I wanted a comparison of the same tests on multiple implementations. So what do you do? Well, it’s a small open source tool so I decided to contribute. That’s what this post is about.&lt;/p&gt;
+
+&lt;h1 id=&quot;porting-the-tool&quot;&gt;Porting the tool&lt;/h1&gt;
+
+&lt;p&gt;I’m teaching myself Rust by writing in it, and my Python is a little rusty (heh), so I decided the first thing I’d do was port the tool to Rust. So I set out to find a good crate for handling command line arguments. And I found an implementation for &lt;a href=&quot;http://docopt.org/&quot;&gt;docopt&lt;/a&gt;, which seems like a rather nice initiative. I can recommend the &lt;a href=&quot;https://github.com/docopt/docopt.rs&quot;&gt;Rust implementation of doctopt&lt;/a&gt; because it goes further than the basic API, and uses &lt;code class=&quot;highlighter-rouge&quot;&gt;rustc-serialize&lt;/code&gt; and macros to get you a nice struct with all the command-line arguments with mostly the right types already.&lt;/p&gt;
+
+&lt;p&gt;I also grabbed the &lt;a href=&quot;https://crates.io/crates/regex&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;regex&lt;/code&gt;&lt;/a&gt; crate of course, to take the benchmark results apart. The regex for a line is the benchmark was something I could just copy, but I decided to pick it apart and &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/blob/0512f17d1206f919706e1486e3dca4dd99068a39/src/benchmark.rs#L114-L119&quot;&gt;add comments&lt;/a&gt;. The rest of the code started out in mostly the same structure as the Python code, with structs and functions instead of classes.&lt;/p&gt;
+
+&lt;p&gt;Now for the output I wanted a nice table format and I found another crate for that which is very simple. It’s called &lt;a href=&quot;https://crates.io/crates/tabwriter&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;tabwriter&lt;/code&gt;&lt;/a&gt; and it’s a port of the Go package for elastic tabstops. Which makes creating a table as simple as putting a &lt;code class=&quot;highlighter-rouge&quot;&gt;\t&lt;/code&gt; (tab) character between you’re columns. Given that that’s what the character was originally intended for, it’s a rather elegant solution.&lt;/p&gt;
+
+&lt;p&gt;Grabbing all of these crates with &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo&lt;/code&gt; is very simple, and one of the pleasures of the Rust ecosystem. To make it even easier I did &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo install cargo-edit&lt;/code&gt;, which gives you three extra cargo subcommands: &lt;code class=&quot;highlighter-rouge&quot;&gt;list&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;add&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;rm&lt;/code&gt;. So I could just &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo add tabwriter&lt;/code&gt; to get the latest version of the crate added to project dependencies. No more manual editing of &lt;code class=&quot;highlighter-rouge&quot;&gt;Cargo.toml&lt;/code&gt;!&lt;/p&gt;
+
+&lt;p&gt;Another thing I learnt along the way was that cargo will just dispatch subcommands to whatever available &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo-subcommand&lt;/code&gt; executable on your &lt;code class=&quot;highlighter-rouge&quot;&gt;PATH&lt;/code&gt;. So I didn’t have to do anything special to make this Rust port available to Rust users. You can right now do &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo install cargo-benchcmp&lt;/code&gt;, and have &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo benchcmp&lt;/code&gt; just work.&lt;/p&gt;
+
+&lt;p&gt;Something funny to note about the dependencies I’ve mentioned so far – &lt;code class=&quot;highlighter-rouge&quot;&gt;docopt&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;regex&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;tabwriter&lt;/code&gt; – they’re all written by BurntSushi. I couldn’t have done this Rust port of his tool so easily without his other crates.&lt;/p&gt;
+
+&lt;h1 id=&quot;comparing-modules&quot;&gt;Comparing modules&lt;/h1&gt;
+
+&lt;p&gt;In the project where I had benchmarks to compare, I generated different modules with the names of their implementation technique, all with the same benchmarks. This is fairly easy to &lt;a href=&quot;https://github.com/Apanatshka/dnfa/blob/5cdb4307a06aee51f2d19f2619e0ff2e5e49af18/benches/basic.rs&quot;&gt;set up with a macro&lt;/a&gt;. The result is the same benchmark name, with different prefixes for the different implementations. So in the port of &lt;code class=&quot;highlighter-rouge&quot;&gt;benchcmp&lt;/code&gt;, I added an option to provide two module names first, and the one or more files to read. The files would still contain the benchmark results, but the module names would be used to pick the benchmarks to compare.&lt;/p&gt;
+
+&lt;h1 id=&quot;the-current-interface&quot;&gt;The current interface&lt;/h1&gt;
+
+&lt;p&gt;Help message:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ cargo benchcmp --help
+Compares Rust micro-benchmark results.
+
+Usage:
+    cargo benchcmp [options] &amp;lt;old&amp;gt; &amp;lt;new&amp;gt;
+    cargo benchcmp [options] &amp;lt;old&amp;gt; &amp;lt;new&amp;gt; &amp;lt;file&amp;gt;
+    cargo benchcmp -h | --help
+    cargo benchcmp --version
+
+The first version takes two files and compares the common benchmarks.
+
+The second version takes two benchmark name prefixes and one benchmark output
+file, and compares the common benchmarks (as determined by comparing the
+benchmark names with their prefixes stripped). Benchmarks not matching either
+prefix are ignored completely.
+
+If benchmark output is sent on stdin, then the second version is used and the
+third file parameter is not needed.
+
+Options:
+    -h, --help           Show this help message and exit.
+    --version            Show the version.
+    --threshold &amp;lt;n&amp;gt;      Show only comparisons with a percentage change greater
+                         than this threshold.
+    --variance           Show the variance of each benchmark.
+    --improvements       Show only improvements.
+    --regressions        Show only regressions.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;An example output:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ cd aho-corasick
+$ cargo bench | cargo benchcmp --variance --threshold 5 dense:: dense_boxed:: -
+ name                                dense:: ns/iter               dense_boxed:: ns/iter         diff ns/iter  diff % 
+ ac_one_prefix_byte_every_match      112,957 (+/- 1480) (88 MB/s)  150,581 (+/- 814) (66 MB/s)         37,624  33.31% 
+ ac_one_prefix_byte_random           16,096 (+/- 292) (621 MB/s)   20,273 (+/- 60) (493 MB/s)           4,177  25.95% 
+ ac_ten_bytes                        58,588 (+/- 218) (170 MB/s)   108,092 (+/- 683) (92 MB/s)         49,504  84.50% 
+ ac_ten_diff_prefix                  58,601 (+/- 215) (170 MB/s)   108,082 (+/- 712) (92 MB/s)         49,481  84.44% 
+ ac_ten_one_prefix_byte_every_match  112,920 (+/- 1454) (88 MB/s)  150,561 (+/- 824) (66 MB/s)         37,641  33.33% 
+ ac_ten_one_prefix_byte_random       19,181 (+/- 251) (521 MB/s)   23,684 (+/- 427) (422 MB/s)          4,503  23.48% 
+ ac_two_one_prefix_byte_every_match  112,934 (+/- 2037) (88 MB/s)  150,571 (+/- 1618) (66 MB/s)        37,637  33.33% 
+ ac_two_one_prefix_byte_random       16,511 (+/- 142) (605 MB/s)   21,009 (+/- 94) (476 MB/s)           4,498  27.24% 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h1 id=&quot;things-to-come&quot;&gt;Things to come&lt;/h1&gt;
+
+&lt;p&gt;I’m not done with this tool just yet. I did open a PR to the original repo and got a great code review from BurntSushi. He published it to &lt;a href=&quot;https://crates.io/&quot;&gt;crates.io&lt;/a&gt; too, and beat me to the punch by posting on Reddit, but I hope this post was still interesting to you. Here’s some things I’ve been working on:&lt;/p&gt;
+
+&lt;h2 id=&quot;coloured-output&quot;&gt;Coloured output&lt;/h2&gt;
+
+&lt;p&gt;Already during the first code review I figured out that my Rust port didn’t get the output quite right. The table was already left-justified, whereas the original tool did right-justification of the last two columns. I liked the original output better so I switched &lt;code class=&quot;highlighter-rouge&quot;&gt;tabwriter&lt;/code&gt; for &lt;a href=&quot;https://crates.io/crates/prettytable-rs&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;prettytable-rs&lt;/code&gt;&lt;/a&gt;, which is a nice ascii table generator. Out of the box it generated a lot of rules as well, but the format can be customised and one without any rules is even available as a preset &lt;code class=&quot;highlighter-rouge&quot;&gt;prettytable::format::consts::FORMAT_CLEAN&lt;/code&gt;. The macros for the rows are well done, though I might have stumbled upon a regression where you &lt;em&gt;have&lt;/em&gt; to give each cell the default format &lt;code class=&quot;highlighter-rouge&quot;&gt;d-&amp;gt;&quot;you cell here&quot;&lt;/code&gt; to get it to work.&lt;/p&gt;
+
+&lt;p&gt;Anyway, that happened, I added right-justification. But the crate also gives the option to add colours to your table. So a simple change to the code, and now &lt;code class=&quot;highlighter-rouge&quot;&gt;benchcmp&lt;/code&gt; will give you red rows for regressions and green rows for improvements (&lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/pull/9&quot;&gt;Pull Request&lt;/a&gt;). In my experience, this makes the options show only one or the other obsolete, but it doesn’t hurt so it’s still in there.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ cd aho-corasick
+$ cargo bench | cargo benchcmp --variance dense:: dense_boxed:: -
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;img src=&quot;/images/compsci/2016/09/04/porting-cargo-benchcmp/screenshot_coloured_output.png&quot; alt=&quot;Coloured output of the tool, with a bold header line, a lot of green (improvement) lines and two read (regression) lines&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;n-way-comparison-plotting&quot;&gt;N-way comparison: Plotting&lt;/h2&gt;
+
+&lt;p&gt;Warning: This feature may not actually make it into the tool proper. You can find &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/issues/8&quot;&gt;the discussion around that on github&lt;/a&gt;. For now this functionality lives in a &lt;a href=&quot;https://github.com/Apanatshka/cargo-benchcmp/tree/plot&quot;&gt;branch&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Comparing two implementations or commits at a time is great for day-to-day use and the table gives you detailed information. But when you just implemented a feature in a few different ways and found another crate that gives the same functionality, you really need an overview of how all of these things compare to each other. So I added a new subcommand &lt;code class=&quot;highlighter-rouge&quot;&gt;plot&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;benchcmp&lt;/code&gt; (and moving the table functionality to subcommand &lt;code class=&quot;highlighter-rouge&quot;&gt;table&lt;/code&gt;; I apologise in advance for the breaking change).&lt;/p&gt;
+
+&lt;p&gt;The plot command compares by file or by module, any benchmark test that is present in multiple files/modules. It generated images in &lt;code class=&quot;highlighter-rouge&quot;&gt;target/benchcmp&lt;/code&gt;, one file per benchmark, with a barchart/histogram plot + error bars for the variance. To generate the plots it uses &lt;code class=&quot;highlighter-rouge&quot;&gt;gnuplot&lt;/code&gt;, which should be installed separately and put on your &lt;code class=&quot;highlighter-rouge&quot;&gt;PATH&lt;/code&gt;. I suppose that’s a weakness, but it was the easiest way to do this. Any suggestions to cut or simplify that dependency would be much appreciated, but I couldn’t find a pure Rust plotting crate. If you’re wondering, I don’t use the &lt;a href=&quot;https://crates.io/crates/gnuplot&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;gnuplot&lt;/code&gt; crate&lt;/a&gt;, though I did try it at first. In the end it was easier to generate a gnuplot script myself than work with the limited subset of the crate, which does shallow bindings anyway. On the upside, I got to learn about gnuplot, which is a very handy (and powerful) tool indeed!&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://cloud.githubusercontent.com/assets/1237863/17133147/362f7c22-5325-11e6-909a-bf76a8ecc85a.png&quot; alt=&quot;A bar plot with whiskers that compares benchmark test ac_ten_one_prefix_byte_every_match for all implementations of aho-corasick (dense, dense_boxed, full, full_overlap and sparse)&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;tests&quot;&gt;Tests&lt;/h2&gt;
+
+&lt;p&gt;One of the things that came up after the first release of the Rust version of &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo-benchcmp&lt;/code&gt; is tests. I kind of didn’t write any… So I &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/issues/3&quot;&gt;asked&lt;/a&gt; for a little advice on what to test, and got to work. So now I can report that &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo-benchcmp&lt;/code&gt; is pretty well-tested with &lt;a href=&quot;https://github.com/BurntSushi/quickcheck&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;quickcheck&lt;/code&gt;&lt;/a&gt; for all the unit tests and &lt;a href=&quot;https://github.com/nathanross/second_law&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;second_law&lt;/code&gt;&lt;/a&gt; for the integration tests (&lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/pull/10&quot;&gt;Pull Request&lt;/a&gt;). So if you need practical examples of quickcheck properties, implementing your own &lt;code class=&quot;highlighter-rouge&quot;&gt;Arbitrary&lt;/code&gt; instances, or integration testing a Rust commandline tool, or if you’re just curious, have a look :)&lt;/p&gt;
+
+&lt;h2 id=&quot;better-statistics&quot;&gt;Better statistics&lt;/h2&gt;
+
+&lt;p&gt;There is &lt;a href=&quot;https://github.com/BurntSushi/cargo-benchcmp/issues/4&quot;&gt;one last issue&lt;/a&gt; on the repo for using better statistics when comparing benchmark measurements. I haven’t looked into this one yet. We may need more information than &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo bench&lt;/code&gt; currently provides. Feel free you look into this one yourself dear reader. Just remember to outline your plan in the issue before you start doing major work. I made the mistake not to do that with the plotting feature, and now that work might not survive… But at least it got me a bit more to write about here ^^&lt;/p&gt;
+
+&lt;h2 id=&quot;real-world-comparisons-with-the-tool&quot;&gt;Real world comparisons with the tool&lt;/h2&gt;
+
+&lt;p&gt;This post uses only small examples of &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo benchcmp&lt;/code&gt; output. I want to write a longer post on the implementation of finite automata with benchmark comparisons, along with performance traces and optimisations. But that may take some more time because I’m still figuring out how to use &lt;code class=&quot;highlighter-rouge&quot;&gt;perf&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;callgrind&lt;/code&gt; etc., and my implementation is still squarely beaten by BurntSushi’s &lt;a href=&quot;https://github.com/burntsushi/aho-corasick&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;aho-corasick&lt;/code&gt;&lt;/a&gt; crate. But, you know, whatever ¯\_(ツ)_/¯&lt;/p&gt;
+</description>
+        <pubDate>Sun, 04 Sep 2016 00:00:00 +0100</pubDate>
+        <link>http://Apanatshka.github.io/compsci/2016/09/04/porting-cargo-benchcmp/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/09/04/porting-cargo-benchcmp/</guid>
+        
+        <category>rust</category>
+        
+        <category>cargo</category>
+        
+        <category>tool</category>
+        
+        <category>benchmark</category>
+        
+        <category>benchcmp</category>
+        
+        
+        <category>CompSci</category>
+        
+      </item>
     
       <item>
         <title>Pretty Terminal</title>
@@ -16,7 +147,7 @@
 
 &lt;p&gt;&lt;img src=&quot;/images/compsci/2016/07/23/pretty-terminal/iterm2_gogh_aci_source_code_pro_zsh_powerlevel9k.png&quot; alt=&quot;A Zsh terminal, with the powerlevel9k theme (default settings), and the Gogh Aci colour scheme on the font Source Code Pro&quot; /&gt;&lt;/p&gt;
 
-&lt;p&gt;Skip to the &lt;a href=&quot;#tldr&quot;&gt;end&lt;/a&gt; for terse instructions/commands for mac and linux. I don’t develop on windows, but I think you can probably reuse most of these instructions if you can get a posix terminal emulator.&lt;/p&gt;
+&lt;p&gt;Skip to the &lt;a href=&quot;#tldr&quot;&gt;end&lt;/a&gt; for terse instructions/commands for mac and linux.&lt;/p&gt;
 
 &lt;h2 id=&quot;terminal&quot;&gt;Terminal&lt;/h2&gt;
 
@@ -80,7 +211,7 @@ If you’re on a mac, Terminal.app is not going to help you with 256 colours. Wh
     &lt;p&gt;Powerlevel9k theme:&lt;/p&gt;
 
     &lt;div class=&quot;language-zsh highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone https://github.com/bhilburn/powerlevel9k.git ~/.oh-my-zsh/custom/themes/powerlevel9k
-sed -i &lt;span class=&quot;s1&quot;&gt;&#39;s:ZSH_THEME=&quot;robbyrussell&quot;:ZSH_THEME=&quot;powerlevel9k/powerlevel9k&quot;:&#39;&lt;/span&gt; ~/.zshrc
+sed -i &lt;span class=&quot;s1&quot;&gt;'s:ZSH_THEME=&quot;robbyrussell&quot;:ZSH_THEME=&quot;powerlevel9k/powerlevel9k&quot;:'&lt;/span&gt; ~/.zshrc
 &lt;/code&gt;&lt;/pre&gt;
     &lt;/div&gt;
   &lt;/li&gt;
@@ -92,7 +223,7 @@ if [[ -e /usr/share/terminfo/x/xterm-256color ]]; then
     export TERM=xterm-256color
 fi
    
-DEFAULT_USER=&#39;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$USER&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&#39;
+DEFAULT_USER='&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$USER&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;'
 &quot;&lt;/span&gt; | cat - ~/.zshrc &amp;gt; /tmp/out &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; mv /tmp/out ~/.zshrc
 &lt;/code&gt;&lt;/pre&gt;
     &lt;/div&gt;
@@ -147,19 +278,23 @@ open iterm2
     &lt;p&gt;Powerlevel9k theme:&lt;/p&gt;
 
     &lt;div class=&quot;language-zsh highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone https://github.com/bhilburn/powerlevel9k.git ~/.oh-my-zsh/custom/themes/powerlevel9k
-sed -i &lt;span class=&quot;s1&quot;&gt;&#39;s:ZSH_THEME=&quot;robbyrussell&quot;:ZSH_THEME=&quot;powerlevel9k/powerlevel9k&quot;:&#39;&lt;/span&gt; ~/.zshrc
+sed -i &lt;span class=&quot;s1&quot;&gt;'s:ZSH_THEME=&quot;robbyrussell&quot;:ZSH_THEME=&quot;powerlevel9k/powerlevel9k&quot;:'&lt;/span&gt; ~/.zshrc
 &lt;/code&gt;&lt;/pre&gt;
     &lt;/div&gt;
   &lt;/li&gt;
   &lt;li&gt;
     &lt;p&gt;Set default user so powerlevel9k doesn’t show redundant info:&lt;/p&gt;
 
-    &lt;div class=&quot;language-zsh highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;DEFAULT_USER=&#39;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$USER&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&#39;
+    &lt;div class=&quot;language-zsh highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;DEFAULT_USER='&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$USER&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;'
 &quot;&lt;/span&gt; | cat - ~/.zshrc &amp;gt; /tmp/out &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; mv /tmp/out ~/.zshrc
 &lt;/code&gt;&lt;/pre&gt;
     &lt;/div&gt;
   &lt;/li&gt;
 &lt;/ol&gt;
+
+&lt;h2 id=&quot;windows&quot;&gt;Windows&lt;/h2&gt;
+
+&lt;p&gt;Sorry, but I don’t develop on windows. I think you can probably reuse most of these instructions if you can get a proper terminal emulator. Or you could switch to a linux or whatever ¯\_(ツ)_/¯&lt;/p&gt;
 </description>
         <pubDate>Sat, 23 Jul 2016 00:00:00 +0100</pubDate>
         <link>http://Apanatshka.github.io/compsci/2016/07/23/pretty-terminal/</link>
@@ -207,7 +342,7 @@ sed -i &lt;span class=&quot;s1&quot;&gt;&#39;s:ZSH_THEME=&quot;robbyrussell&quot
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Non&amp;#45;regular language example Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Non-regular language example&quot; width=&quot;405pt&quot; height=&quot;78pt&quot; viewBox=&quot;0.00 0.00 405.00 77.50&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Non-regular language example&quot; width=&quot;418pt&quot; height=&quot;78pt&quot; viewBox=&quot;0.00 0.00 418.00 77.50&quot;&gt;
 &lt;title&gt;Non-regular language example&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Non-regular language example&amp;quot; { 
 bgcolor=&amp;quot;transparent&amp;quot;;
@@ -242,49 +377,49 @@ q₂ -&amp;gt; q₂ [label=&amp;quot;1, 0 → ε&amp;quot;];
 &lt;/g&gt;
 &lt;!-- q₁ --&gt;
 &lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₁&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;178&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;178&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;184&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;184&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₀&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₀&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M75.1326,-18.5C94.7492,-18.5 126.689,-18.5 149.576,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;149.684,-22.0001 159.684,-18.5 149.684,-15.0001 149.684,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;117.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, ε → $&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M75.2149,-18.5C96.168,-18.5 131.28,-18.5 155.713,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;155.778,-22.0001 165.778,-18.5 155.778,-15.0001 155.778,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;120.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, ε → $&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₃ --&gt;
 &lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₃&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;378.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;378.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;378.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₃&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;391.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;391.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;391.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₃&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₁&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M171.266,-35.5373C169.892,-45.3579 172.137,-54.5 178,-54.5 181.665,-54.5 183.916,-50.9289 184.753,-45.8529&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;188.252,-45.5307 184.734,-35.5373 181.252,-45.5439 188.252,-45.5307&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;178&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M176.969,-35.1641C175.406,-45.125 177.75,-54.5 184,-54.5 188.004,-54.5 190.405,-50.6525 191.202,-45.2682&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;194.7,-45.1033 191.031,-35.1641 187.701,-45.2219 194.7,-45.1033&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;184&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂ --&gt;
 &lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₂&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;257&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;257&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₂&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;264&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;264&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₂&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁&amp;#45;&amp;gt;q₂ --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₁&amp;#45;&amp;gt;q₂&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M196.089,-18.5C205.659,-18.5 217.817,-18.5 228.677,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;228.959,-22.0001 238.959,-18.5 228.959,-15.0001 228.959,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;217.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M202.311,-18.5C212.106,-18.5 224.578,-18.5 235.665,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;235.738,-22.0001 245.738,-18.5 235.738,-15.0001 235.738,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;224&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂&amp;#45;&amp;gt;q₃ --&gt;
 &lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₂&amp;#45;&amp;gt;q₃&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M275.121,-18.5C294.51,-18.5 326.393,-18.5 349.433,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;349.63,-22.0001 359.63,-18.5 349.63,-15.0001 349.63,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;317.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M282.187,-18.5C302.888,-18.5 337.943,-18.5 362.553,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;362.711,-22.0001 372.711,-18.5 362.711,-15.0001 362.711,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;327.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂&amp;#45;&amp;gt;q₂ --&gt;
 &lt;g id=&quot;edge6&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₂&amp;#45;&amp;gt;q₂&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M250.266,-35.5373C248.892,-45.3579 251.137,-54.5 257,-54.5 260.665,-54.5 262.916,-50.9289 263.753,-45.8529&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;267.252,-45.5307 263.734,-35.5373 260.252,-45.5439 267.252,-45.5307&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;257&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 0 → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M256.969,-35.1641C255.406,-45.125 257.75,-54.5 264,-54.5 268.004,-54.5 270.405,-50.6525 271.202,-45.2682&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;274.7,-45.1033 271.031,-35.1641 267.701,-45.2219 274.7,-45.1033&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;264&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 0 → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
@@ -302,7 +437,7 @@ The outer states are only there to make sure we have a fully empty stack before 
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Non&amp;#45;regular language example, deterministic Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Non-regular language example, deterministic&quot; width=&quot;447pt&quot; height=&quot;78pt&quot; viewBox=&quot;0.00 0.00 447.00 77.50&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Non-regular language example, deterministic&quot; width=&quot;468pt&quot; height=&quot;78pt&quot; viewBox=&quot;0.00 0.00 468.00 77.50&quot;&gt;
 &lt;title&gt;Non-regular language example, deterministic&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Non-regular language example, deterministic&amp;quot; { 
 bgcolor=&amp;quot;transparent&amp;quot;;
@@ -337,49 +472,49 @@ q₂ -&amp;gt; q₂ [label=&amp;quot;1, 0 → ε&amp;quot;];
 &lt;/g&gt;
 &lt;!-- q₁ --&gt;
 &lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₁&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;178&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;178&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;185&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;185&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₀&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₀&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M75.1326,-18.5C94.7492,-18.5 126.689,-18.5 149.576,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;149.684,-22.0001 159.684,-18.5 149.684,-15.0001 149.684,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;117.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → $&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M75.0893,-18.5C96.2603,-18.5 132.046,-18.5 156.788,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;156.964,-22.0001 166.964,-18.5 156.964,-15.0001 156.964,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;121&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → $&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₃ --&gt;
 &lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₃&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;420.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;420.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;420.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₃&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;441.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;441.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;441.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₃&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₁&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M167.849,-33.6666C164.772,-44.1641 168.156,-54.5 178,-54.5 184.46,-54.5 188.138,-50.0487 189.034,-44.0216&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;192.488,-43.3334 188.151,-33.6666 185.513,-43.9277 192.488,-43.3334&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;178&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M174.292,-33.2917C170.806,-43.9165 174.375,-54.5 185,-54.5 192.139,-54.5 196.092,-49.7224 196.861,-43.3647&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;200.322,-42.8288 195.708,-33.2917 193.368,-43.6248 200.322,-42.8288&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;185&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂ --&gt;
 &lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₂&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;299&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;299&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₂&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;313&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;313&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₂&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁&amp;#45;&amp;gt;q₂ --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₁&amp;#45;&amp;gt;q₂&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M196.05,-18.5C215.579,-18.5 247.839,-18.5 270.838,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;270.982,-22.0001 280.982,-18.5 270.982,-15.0001 270.982,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;238.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 0 → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M203.256,-18.5C224.274,-18.5 260.031,-18.5 284.775,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;284.953,-22.0001 294.953,-18.5 284.953,-15.0001 284.953,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;249&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 0 → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂&amp;#45;&amp;gt;q₃ --&gt;
 &lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₂&amp;#45;&amp;gt;q₃&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M317.121,-18.5C336.51,-18.5 368.393,-18.5 391.433,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;391.63,-22.0001 401.63,-18.5 391.63,-15.0001 391.63,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;359.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, $ → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M331.06,-18.5C351.974,-18.5 387.702,-18.5 412.626,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;412.898,-22.0001 422.898,-18.5 412.898,-15.0001 412.898,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;377&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, $ → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂&amp;#45;&amp;gt;q₂ --&gt;
 &lt;g id=&quot;edge6&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₂&amp;#45;&amp;gt;q₂&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M288.849,-33.6666C285.772,-44.1641 289.156,-54.5 299,-54.5 305.46,-54.5 309.138,-50.0487 310.034,-44.0216&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;313.488,-43.3334 309.151,-33.6666 306.513,-43.9277 313.488,-43.3334&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;299&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 0 → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M302.292,-33.2917C298.806,-43.9165 302.375,-54.5 313,-54.5 320.139,-54.5 324.092,-49.7224 324.861,-43.3647&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;328.322,-42.8288 323.708,-33.2917 321.368,-43.6248 328.322,-42.8288&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;313&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 0 → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
@@ -392,7 +527,7 @@ q₂ -&amp;gt; q₂ [label=&amp;quot;1, 0 → ε&amp;quot;];
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Even&amp;#45;length binary palindromes Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Even-length binary palindromes&quot; width=&quot;405pt&quot; height=&quot;93pt&quot; viewBox=&quot;0.00 0.00 405.00 92.50&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Even-length binary palindromes&quot; width=&quot;418pt&quot; height=&quot;93pt&quot; viewBox=&quot;0.00 0.00 418.00 92.50&quot;&gt;
 &lt;title&gt;Even-length binary palindromes&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Even-length binary palindromes&amp;quot; { 
 bgcolor=&amp;quot;transparent&amp;quot;;
@@ -427,51 +562,51 @@ q₂ -&amp;gt; q₂ [label=&amp;quot;0, 0 → ε\n1, 1 → ε&amp;quot;];
 &lt;/g&gt;
 &lt;!-- q₁ --&gt;
 &lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₁&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;178&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;178&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;184&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;184&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₀&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₀&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M75.1326,-18.5C94.7492,-18.5 126.689,-18.5 149.576,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;149.684,-22.0001 159.684,-18.5 149.684,-15.0001 149.684,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;117.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, ε → $&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M75.2149,-18.5C96.168,-18.5 131.28,-18.5 155.713,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;155.778,-22.0001 165.778,-18.5 155.778,-15.0001 155.778,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;120.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, ε → $&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₃ --&gt;
 &lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₃&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;378.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;378.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;378.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₃&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;391.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;391.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;391.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₃&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₁&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M171.266,-35.5373C169.892,-45.3579 172.137,-54.5 178,-54.5 181.665,-54.5 183.916,-50.9289 184.753,-45.8529&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;188.252,-45.5307 184.734,-35.5373 181.252,-45.5439 188.252,-45.5307&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;178&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;178&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, ε → 1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M176.969,-35.1641C175.406,-45.125 177.75,-54.5 184,-54.5 188.004,-54.5 190.405,-50.6525 191.202,-45.2682&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;194.7,-45.1033 191.031,-35.1641 187.701,-45.2219 194.7,-45.1033&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;184&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;184&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, ε → 1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂ --&gt;
 &lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₂&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;257&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;257&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₂&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;264&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;264&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₂&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁&amp;#45;&amp;gt;q₂ --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₁&amp;#45;&amp;gt;q₂&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M196.089,-18.5C205.659,-18.5 217.817,-18.5 228.677,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;228.959,-22.0001 238.959,-18.5 228.959,-15.0001 228.959,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;217.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M202.311,-18.5C212.106,-18.5 224.578,-18.5 235.665,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;235.738,-22.0001 245.738,-18.5 235.738,-15.0001 235.738,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;224&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂&amp;#45;&amp;gt;q₃ --&gt;
 &lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₂&amp;#45;&amp;gt;q₃&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M275.121,-18.5C294.51,-18.5 326.393,-18.5 349.433,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;349.63,-22.0001 359.63,-18.5 349.63,-15.0001 349.63,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;317.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M282.187,-18.5C302.888,-18.5 337.943,-18.5 362.553,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;362.711,-22.0001 372.711,-18.5 362.711,-15.0001 362.711,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;327.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂&amp;#45;&amp;gt;q₂ --&gt;
 &lt;g id=&quot;edge6&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₂&amp;#45;&amp;gt;q₂&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M250.266,-35.5373C248.892,-45.3579 251.137,-54.5 257,-54.5 260.665,-54.5 262.916,-50.9289 263.753,-45.8529&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;267.252,-45.5307 263.734,-35.5373 260.252,-45.5439 267.252,-45.5307&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;257&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 → ε&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;257&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M256.969,-35.1641C255.406,-45.125 257.75,-54.5 264,-54.5 268.004,-54.5 270.405,-50.6525 271.202,-45.2682&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;274.7,-45.1033 271.031,-35.1641 267.701,-45.2219 274.7,-45.1033&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;264&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 → ε&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;264&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
@@ -522,7 +657,7 @@ So instead we’re going to adapt our definition of PDAs, so that we can write c
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Even&amp;#45;length binary palindromes, v2 Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Even-length binary palindromes, v2&quot; width=&quot;453pt&quot; height=&quot;93pt&quot; viewBox=&quot;0.00 0.00 453.00 92.50&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Even-length binary palindromes, v2&quot; width=&quot;476pt&quot; height=&quot;93pt&quot; viewBox=&quot;0.00 0.00 476.00 92.50&quot;&gt;
 &lt;title&gt;Even-length binary palindromes, v2&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Even-length binary palindromes, v2&amp;quot; { 
 bgcolor=&amp;quot;transparent&amp;quot;;
@@ -548,65 +683,65 @@ q₂ -&amp;gt; q₂ [label=&amp;quot;0, 0 → ε\n1, 1 → ε&amp;quot;];
 &lt;/g&gt;
 &lt;!-- q₀ --&gt;
 &lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₀&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;62.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;62.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;62.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₀′&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;65.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;65.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;65.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₀′&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- start&amp;#45;&amp;gt;q₀ --&gt;
 &lt;g id=&quot;edge1&quot; class=&quot;edge&quot;&gt;&lt;title&gt;start&amp;#45;&amp;gt;q₀&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M18.8248,-18.5C23.4606,-18.5 28.5675,-18.5 33.5881,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;33.5936,-22.0001 43.5936,-18.5 33.5935,-15.0001 33.5936,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;22.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;$&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M18.6883,-18.5C24.3305,-18.5 30.7152,-18.5 36.8877,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;36.9066,-22.0001 46.9066,-18.5 36.9065,-15.0001 36.9066,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;24&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;$&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁ --&gt;
 &lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₁&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;184&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;184&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁′&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;194&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;194&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁′&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₀&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₀&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M81.1326,-18.5C100.749,-18.5 132.689,-18.5 155.576,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;155.684,-22.0001 165.684,-18.5 155.684,-15.0001 155.684,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;123.5&quot; y=&quot;-37.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;123.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, ε → 1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M84.0893,-18.5C105.26,-18.5 141.046,-18.5 165.788,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;165.964,-22.0001 175.964,-18.5 165.964,-15.0001 165.964,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;130&quot; y=&quot;-37.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;130&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, ε → 1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₃ --&gt;
 &lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₃&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;426.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;426.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;426.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₃′&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;449.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;449.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;449.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₃′&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₁&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M173.849,-33.6666C170.772,-44.1641 174.156,-54.5 184,-54.5 190.46,-54.5 194.138,-50.0487 195.034,-44.0216&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;198.488,-43.3334 194.151,-33.6666 191.513,-43.9277 198.488,-43.3334&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;184&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;184&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, ε → 1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M183.292,-33.2917C179.806,-43.9165 183.375,-54.5 194,-54.5 201.139,-54.5 205.092,-49.7224 205.861,-43.3647&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;209.322,-42.8288 204.708,-33.2917 202.368,-43.6248 209.322,-42.8288&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;194&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, ε → 0&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;194&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, ε → 1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂ --&gt;
 &lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₂&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;305&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;305&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₂′&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;322&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;322&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₂′&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁&amp;#45;&amp;gt;q₂ --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₁&amp;#45;&amp;gt;q₂&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M202.05,-18.5C221.579,-18.5 253.839,-18.5 276.838,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;276.982,-22.0001 286.982,-18.5 276.982,-15.0001 276.982,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;244.5&quot; y=&quot;-37.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 → ε&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;244.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M212.256,-18.5C233.274,-18.5 269.031,-18.5 293.775,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;293.953,-22.0001 303.953,-18.5 293.953,-15.0001 293.953,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;258&quot; y=&quot;-37.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 → ε&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;258&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂&amp;#45;&amp;gt;q₃ --&gt;
 &lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₂&amp;#45;&amp;gt;q₃&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M323.121,-18.5C342.51,-18.5 374.393,-18.5 397.433,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;397.63,-22.0001 407.63,-18.5 397.63,-15.0001 397.63,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;365.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M340.187,-18.5C360.888,-18.5 395.943,-18.5 420.553,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;420.711,-22.0001 430.711,-18.5 420.711,-15.0001 420.711,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;385.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₂&amp;#45;&amp;gt;q₂ --&gt;
 &lt;g id=&quot;edge6&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₂&amp;#45;&amp;gt;q₂&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M294.849,-33.6666C291.772,-44.1641 295.156,-54.5 305,-54.5 311.46,-54.5 315.138,-50.0487 316.034,-44.0216&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;319.488,-43.3334 315.151,-33.6666 312.513,-43.9277 319.488,-43.3334&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;305&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 → ε&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;305&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M311.627,-33.2917C308.249,-43.9165 311.707,-54.5 322,-54.5 328.916,-54.5 332.746,-49.7224 333.49,-43.3647&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;336.954,-42.845 332.373,-33.2917 329.997,-43.6165 336.954,-42.845&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;322&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 → ε&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;322&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
@@ -813,7 +948,7 @@ These rules are written with terminals (symbols from the alphabet), and sorts (o
 
 &lt;!-- ## Code
 
-Let&#39;s start with a bit of code to define context-free grammars in Rust:
+Let's start with a bit of code to define context-free grammars in Rust:
 
 ```rust
 use std::collections::HashMap;
@@ -824,7 +959,7 @@ type RuleBody = Vec&lt;RulePart&gt;;
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
 enum RulePart {
-  Lit(&amp;&#39;static str),
+  Lit(&amp;'static str),
   Var(Variable),
   Epsilon,
 }
@@ -861,7 +996,7 @@ Output:
 S -&gt; [[Lit(&quot;0&quot;), Var(S), Lit(&quot;0&quot;)], [Lit(&quot;1&quot;), Var(S), Lit(&quot;1&quot;)], [Epsilon]]
 ```
 
-If you&#39;re wondering why I didn&#39;t write the code for the derivation of the binary string as shown earlier, that&#39;s because it requires &#39;angelic non-determinism&#39;. That&#39;s an oracle that tells you which rule to pick when there are multiple. Those are pretty hard to come by ;) --&gt;
+If you're wondering why I didn't write the code for the derivation of the binary string as shown earlier, that's because it requires 'angelic non-determinism'. That's an oracle that tells you which rule to pick when there are multiple. Those are pretty hard to come by ;) --&gt;
 
 &lt;h2 id=&quot;translation-to-pda&quot;&gt;Translation to PDA&lt;/h2&gt;
 
@@ -874,7 +1009,7 @@ If you&#39;re wondering why I didn&#39;t write the code for the derivation of th
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Even&amp;#45;length binary palindromes, translated from the grammar Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Even-length binary palindromes, translated from the grammar&quot; width=&quot;272pt&quot; height=&quot;138pt&quot; viewBox=&quot;0.00 0.00 272.00 137.50&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Even-length binary palindromes, translated from the grammar&quot; width=&quot;284pt&quot; height=&quot;138pt&quot; viewBox=&quot;0.00 0.00 284.00 137.50&quot;&gt;
 &lt;title&gt;Even-length binary palindromes, translated from the grammar&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Even-length binary palindromes, translated from the grammar&amp;quot; { 
 bgcolor=&amp;quot;transparent&amp;quot;;
@@ -894,37 +1029,37 @@ q₀ -&amp;gt; q₀ [label=&amp;quot;ε, S → 0 S 0\nε, S → 1 S 1\nε, S →
 &lt;/g&gt;
 &lt;!-- q₀ --&gt;
 &lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₀&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;93.5&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;93.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₀&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;97.5&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;97.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₀&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- start&amp;#45;&amp;gt;q₀ --&gt;
 &lt;g id=&quot;edge1&quot; class=&quot;edge&quot;&gt;&lt;title&gt;start&amp;#45;&amp;gt;q₀&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M18.6421,-18.5C31.7637,-18.5 49.9218,-18.5 64.9497,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;65.2224,-22.0001 75.2223,-18.5 65.2223,-15.0001 65.2224,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;28.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;$ S&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M18.5162,-18.5C32.7395,-18.5 53.0428,-18.5 69.3672,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;69.4162,-22.0001 79.4162,-18.5 69.4161,-15.0001 69.4162,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;30.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;$ S&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁ --&gt;
 &lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₁&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;245.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;245.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;245.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;257.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;257.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;257.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₀&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₀&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M111.707,-18.5C137.314,-18.5 185.729,-18.5 216.488,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;216.565,-22.0001 226.565,-18.5 216.565,-15.0001 216.565,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;179&quot; y=&quot;-37.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;179&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ S → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M115.71,-18.5C142.872,-18.5 195.944,-18.5 228.603,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;228.829,-22.0001 238.829,-18.5 228.829,-15.0001 228.829,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;187&quot; y=&quot;-37.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;187&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ S → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₀&amp;#45;&amp;gt;q₀ --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₀&amp;#45;&amp;gt;q₀&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M82.792,-33.2917C79.3057,-43.9165 82.875,-54.5 93.5,-54.5 100.639,-54.5 104.592,-49.7224 105.361,-43.3647&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;108.822,-42.8288 104.208,-33.2917 101.868,-43.6248 108.822,-42.8288&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;93.5&quot; y=&quot;-118.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, S → 0 S 0&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;93.5&quot; y=&quot;-103.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, S → 1 S 1&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;93.5&quot; y=&quot;-88.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, S → ε&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;93.5&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 →ε&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;93.5&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M86.5873,-32.9167C82.7765,-43.666 86.4141,-54.5 97.5,-54.5 104.948,-54.5 109.034,-49.6094 109.758,-43.1397&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;113.188,-42.3745 108.413,-32.9167 106.248,-43.2879 113.188,-42.3745&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;97.5&quot; y=&quot;-118.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, S → 0 S 0&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;97.5&quot; y=&quot;-103.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, S → 1 S 1&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;97.5&quot; y=&quot;-88.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, S → ε&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;97.5&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 →ε&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;97.5&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
@@ -939,7 +1074,7 @@ q₀ -&amp;gt; q₀ [label=&amp;quot;ε, S → 0 S 0\nε, S → 1 S 1\nε, S →
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Even&amp;#45;length binary palindromes, translated from the grammar Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Even-length binary palindromes, translated from the grammar&quot; width=&quot;287pt&quot; height=&quot;153pt&quot; viewBox=&quot;0.00 0.00 287.00 152.50&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Even-length binary palindromes, translated from the grammar&quot; width=&quot;299pt&quot; height=&quot;153pt&quot; viewBox=&quot;0.00 0.00 299.00 152.50&quot;&gt;
 &lt;title&gt;Even-length binary palindromes, translated from the grammar&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Even-length binary palindromes, translated from the grammar&amp;quot; { 
 bgcolor=&amp;quot;transparent&amp;quot;;
@@ -959,38 +1094,38 @@ q₀ -&amp;gt; q₀ [label=&amp;quot;0, S → 0 S\n1, S → 1 S\n0, S → 0\n1, 
 &lt;/g&gt;
 &lt;!-- q₀ --&gt;
 &lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₀&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;101&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;101&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₀&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;105&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₀&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- start&amp;#45;&amp;gt;q₀ --&gt;
 &lt;g id=&quot;edge1&quot; class=&quot;edge&quot;&gt;&lt;title&gt;start&amp;#45;&amp;gt;q₀&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M18.6992,-18.5C33.7141,-18.5 55.4986,-18.5 72.7392,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;72.7856,-22.0001 82.7856,-18.5 72.7855,-15.0001 72.7856,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;28.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;$ S&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M18.9412,-18.5C34.9373,-18.5 58.5841,-18.5 76.8873,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;76.9484,-22.0001 86.9483,-18.5 76.9483,-15.0001 76.9484,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;30.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;$ S&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₁ --&gt;
 &lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q₁&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;260.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;260.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;260.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;272.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;272.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;272.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q₁&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₀&amp;#45;&amp;gt;q₁ --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₀&amp;#45;&amp;gt;q₁&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M119.155,-18.5C146.231,-18.5 199.135,-18.5 231.691,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;231.885,-22.0001 241.885,-18.5 231.885,-15.0001 231.885,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;194&quot; y=&quot;-37.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;194&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ S → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M123.088,-18.5C151.556,-18.5 208.959,-18.5 243.435,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;243.757,-22.0001 253.757,-18.5 243.757,-15.0001 243.757,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;202&quot; y=&quot;-37.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ → ε&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;202&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;ε, $ S → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q₀&amp;#45;&amp;gt;q₀ --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q₀&amp;#45;&amp;gt;q₀&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M89.2435,-32.5417C84.8468,-43.4126 88.7656,-54.5 101,-54.5 109.411,-54.5 113.892,-49.2595 114.442,-42.4516&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;117.884,-41.8132 112.756,-32.5417 110.983,-42.9871 117.884,-41.8132&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;101&quot; y=&quot;-133.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, S → 0 S&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;101&quot; y=&quot;-118.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, S → 1 S&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;101&quot; y=&quot;-103.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, S → 0&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;101&quot; y=&quot;-88.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, S → 1&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;101&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 →ε&lt;/text&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;101&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M93.0762,-32.167C88.3066,-43.1562 92.2812,-54.5 105,-54.5 113.744,-54.5 118.355,-49.1383 118.834,-42.2163&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;122.229,-41.3377 116.924,-32.167 115.352,-42.6446 122.229,-41.3377&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105&quot; y=&quot;-133.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, S → 0 S&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105&quot; y=&quot;-118.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, S → 1 S&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105&quot; y=&quot;-103.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, S → 0&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105&quot; y=&quot;-88.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, S → 1&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105&quot; y=&quot;-73.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0, 0 →ε&lt;/text&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1, 1 → ε&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
@@ -1436,7 +1571,7 @@ The way you formally describe a DFA is by defining:&lt;/p&gt;
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Binary string DFA Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;399pt&quot; height=&quot;78pt&quot; viewBox=&quot;0.00 0.00 399.00 78.00&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;411pt&quot; height=&quot;78pt&quot; viewBox=&quot;0.00 0.00 411.00 78.00&quot;&gt;
 &lt;title&gt;Binary string DFA&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Binary string DFA&amp;quot; { 
 bgcolor=&amp;quot;transparent&amp;quot;;
@@ -1470,60 +1605,60 @@ q4 -&amp;gt; q4 [label=&amp;quot;1&amp;quot;];
 &lt;/g&gt;
 &lt;!-- q4 --&gt;
 &lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q4&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;372.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;372.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;372.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q4&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;384.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;384.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;384.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q4&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q4&amp;#45;&amp;gt;q4 --&gt;
 &lt;g id=&quot;edge7&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q4&amp;#45;&amp;gt;q4&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M365.412,-35.7739C363.965,-45.7309 366.328,-55 372.5,-55 376.454,-55 378.844,-51.196 379.672,-45.844&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;383.171,-45.7445 379.588,-35.7739 376.171,-45.8027 383.171,-45.7445&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;372.5&quot; y=&quot;-58.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M377.412,-35.7739C375.965,-45.7309 378.328,-55 384.5,-55 388.454,-55 390.844,-51.196 391.672,-45.844&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;395.171,-45.7445 391.588,-35.7739 388.171,-45.8027 395.171,-45.7445&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;384.5&quot; y=&quot;-58.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q1 --&gt;
 &lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q1&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;135&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;135&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q1&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;138&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;138&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q0&amp;#45;&amp;gt;q1 --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q0&amp;#45;&amp;gt;q1&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M74.0888,-18.5C83.659,-18.5 95.8172,-18.5 106.677,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;106.959,-22.0001 116.959,-18.5 106.959,-15.0001 106.959,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;95.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M74.3588,-18.5C84.7029,-18.5 98.059,-18.5 109.779,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;109.95,-22.0001 119.95,-18.5 109.95,-15.0001 109.95,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;97&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q2 --&gt;
 &lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q2&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;214&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;214&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q2&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;220&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;220&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q2&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q1&amp;#45;&amp;gt;q2 --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q1&amp;#45;&amp;gt;q2&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M153.089,-18.5C162.659,-18.5 174.817,-18.5 185.677,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;185.959,-22.0001 195.959,-18.5 185.959,-15.0001 185.959,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;174.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M156.359,-18.5C166.703,-18.5 180.059,-18.5 191.779,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;191.95,-22.0001 201.95,-18.5 191.95,-15.0001 191.95,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;179&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q3 --&gt;
 &lt;g id=&quot;node6&quot; class=&quot;node&quot;&gt;&lt;title&gt;q3&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;293&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;293&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q3&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;302&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;302&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;q3&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q2&amp;#45;&amp;gt;q3 --&gt;
 &lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q2&amp;#45;&amp;gt;q3&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M232.089,-18.5C241.659,-18.5 253.817,-18.5 264.677,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;264.959,-22.0001 274.959,-18.5 264.959,-15.0001 264.959,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;253.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M238.359,-18.5C248.703,-18.5 262.059,-18.5 273.779,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;273.95,-22.0001 283.95,-18.5 273.95,-15.0001 273.95,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;261&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q3&amp;#45;&amp;gt;q4 --&gt;
 &lt;g id=&quot;edge6&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q3&amp;#45;&amp;gt;q4&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M311.2,-18.5C320.698,-18.5 332.73,-18.5 343.543,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;343.811,-22.0001 353.811,-18.5 343.811,-15.0001 343.811,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;332.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M320.072,-18.5C330.39,-18.5 343.79,-18.5 355.614,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;355.896,-22.0001 365.896,-18.5 355.896,-15.0001 355.896,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;343&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q3&amp;#45;&amp;gt;q3 --&gt;
 &lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q3&amp;#45;&amp;gt;q3&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M286.266,-35.5373C284.892,-45.3579 287.137,-54.5 293,-54.5 296.665,-54.5 298.916,-50.9289 299.753,-45.8529&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;303.252,-45.5307 299.734,-35.5373 296.252,-45.5439 303.252,-45.5307&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;293&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M294.969,-35.1641C293.406,-45.125 295.75,-54.5 302,-54.5 306.004,-54.5 308.405,-50.6525 309.202,-45.2682&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;312.7,-45.1033 309.031,-35.1641 305.701,-45.2219 312.7,-45.1033&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;302&quot; y=&quot;-58.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
@@ -1587,7 +1722,7 @@ So &lt;code class=&quot;highlighter-rouge&quot;&gt;None&lt;/code&gt; is the stuc
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Binary string DFA Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;395pt&quot; height=&quot;322pt&quot; viewBox=&quot;0.00 0.00 394.57 322.07&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;416pt&quot; height=&quot;340pt&quot; viewBox=&quot;0.00 0.00 415.89 339.89&quot;&gt;
 &lt;title&gt;Binary string DFA&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Binary string DFA&amp;quot; { 
 layout=&amp;quot;circo&amp;quot;;
@@ -1623,155 +1758,155 @@ q111 -&amp;gt; q110 [label=&amp;quot;0&amp;quot;];
 q111 -&amp;gt; q111 [label=&amp;quot;1&amp;quot;];
  }&lt;/desc&gt;
 
-&lt;g id=&quot;graph0&quot; class=&quot;graph&quot; transform=&quot;scale(1 1) rotate(0) translate(4 318.066)&quot;&gt;
+&lt;g id=&quot;graph0&quot; class=&quot;graph&quot; transform=&quot;scale(1 1) rotate(0) translate(4 335.892)&quot;&gt;
 &lt;title&gt;Binary string DFA&lt;/title&gt;
 &lt;!-- start --&gt;
 &lt;g id=&quot;node1&quot; class=&quot;node&quot;&gt;&lt;title&gt;start&lt;/title&gt;
 &lt;/g&gt;
 &lt;!-- q000 --&gt;
 &lt;g id=&quot;node6&quot; class=&quot;node&quot;&gt;&lt;title&gt;q000&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;90.5&quot; cy=&quot;-157.283&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;90.5&quot; y=&quot;-153.583&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;000&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;90.5&quot; cy=&quot;-166.196&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;90.5&quot; y=&quot;-162.496&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;000&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- start&amp;#45;&amp;gt;q000 --&gt;
 &lt;g id=&quot;edge1&quot; class=&quot;edge&quot;&gt;&lt;title&gt;start&amp;#45;&amp;gt;q000&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M1.07472,-157.283C5.71729,-157.283 37.5418,-157.283 61.9178,-157.283&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;62.138,-160.783 72.1379,-157.283 62.1379,-153.783 62.138,-160.783&quot; /&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M1.07472,-166.196C5.71729,-166.196 37.5418,-166.196 61.9178,-166.196&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;62.138,-169.696 72.1379,-166.196 62.1379,-162.696 62.138,-169.696&quot; /&gt;
 &lt;/g&gt;
 &lt;!-- q100 --&gt;
 &lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q100&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;131.149&quot; cy=&quot;-59.1486&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;131.149&quot; cy=&quot;-59.1486&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;131.149&quot; y=&quot;-55.4486&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;100&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;133.759&quot; cy=&quot;-61.7591&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;133.759&quot; cy=&quot;-61.7591&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;133.759&quot; y=&quot;-58.0591&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;100&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q100&amp;#45;&amp;gt;q000 --&gt;
 &lt;g id=&quot;edge10&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q100&amp;#45;&amp;gt;q000&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M124.068,-76.2424C117.831,-91.2992 108.648,-113.471 101.462,-130.819&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;98.0926,-129.807 97.4993,-140.385 104.56,-132.486 98.0926,-129.807&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;109.265&quot; y=&quot;-107.331&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M126.616,-79.0047C119.749,-95.5815 109.278,-120.861 101.376,-139.939&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;98.1038,-138.693 97.5104,-149.271 104.571,-141.372 98.1038,-138.693&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;108.996&quot; y=&quot;-113.272&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q001 --&gt;
 &lt;g id=&quot;node7&quot; class=&quot;node&quot;&gt;&lt;title&gt;q001&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;131.149&quot; cy=&quot;-255.418&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;131.149&quot; y=&quot;-251.718&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;001&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;133.759&quot; cy=&quot;-270.632&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;133.759&quot; y=&quot;-266.932&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;001&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q100&amp;#45;&amp;gt;q001 --&gt;
 &lt;g id=&quot;edge11&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q100&amp;#45;&amp;gt;q001&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M131.149,-77.9677C131.149,-112.582 131.149,-186.517 131.149,-227.176&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;127.649,-227.227 131.149,-237.227 134.649,-227.227 127.649,-227.227&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;134.649&quot; y=&quot;-141.372&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M133.759,-80.2952C133.759,-116.928 133.759,-198.803 133.759,-242.265&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;130.259,-242.436 133.759,-252.436 137.259,-242.436 130.259,-242.436&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;128.759&quot; y=&quot;-150.08&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q101 --&gt;
 &lt;g id=&quot;node3&quot; class=&quot;node&quot;&gt;&lt;title&gt;q101&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;327.418&quot; cy=&quot;-255.418&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;327.418&quot; cy=&quot;-255.418&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;327.418&quot; y=&quot;-251.718&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;101&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;342.632&quot; cy=&quot;-270.632&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;342.632&quot; cy=&quot;-270.632&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;342.632&quot; y=&quot;-266.932&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;101&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q010 --&gt;
 &lt;g id=&quot;node8&quot; class=&quot;node&quot;&gt;&lt;title&gt;q010&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;229.283&quot; cy=&quot;-296.066&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;229.283&quot; y=&quot;-292.366&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;010&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;238.196&quot; cy=&quot;-313.892&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;238.196&quot; y=&quot;-310.192&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;010&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q101&amp;#45;&amp;gt;q010 --&gt;
 &lt;g id=&quot;edge12&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q101&amp;#45;&amp;gt;q010&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M308.774,-257.493C292.845,-262.222 269.894,-271.439 252.729,-279.837&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;250.676,-276.958 243.388,-284.648 253.881,-283.181 250.676,-276.958&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;277.252&quot; y=&quot;-257.465&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M323.896,-272.857C306.384,-278.076 280.234,-288.627 261.412,-297.898&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;259.6,-294.895 252.322,-302.594 262.813,-301.114 259.6,-294.895&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;287.654&quot; y=&quot;-274.178&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q011 --&gt;
 &lt;g id=&quot;node9&quot; class=&quot;node&quot;&gt;&lt;title&gt;q011&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;368.066&quot; cy=&quot;-157.283&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;368.066&quot; y=&quot;-153.583&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;011&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;385.892&quot; cy=&quot;-166.196&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;385.892&quot; y=&quot;-162.496&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;011&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q101&amp;#45;&amp;gt;q011 --&gt;
 &lt;g id=&quot;edge13&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q101&amp;#45;&amp;gt;q011&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M334.498,-238.324C340.735,-223.267 349.919,-201.096 357.104,-183.748&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;360.474,-184.759 361.067,-174.181 354.006,-182.08 360.474,-184.759&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;342.301&quot; y=&quot;-214.836&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M349.776,-253.387C356.642,-236.81 367.113,-211.531 375.016,-192.453&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;378.288,-193.699 378.881,-183.12 371.821,-191.02 378.288,-193.699&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;357.396&quot; y=&quot;-226.72&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q110 --&gt;
 &lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q110&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;229.283&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;229.283&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;229.283&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;110&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;238.196&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;238.196&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;238.196&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;110&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q110&amp;#45;&amp;gt;q100 --&gt;
 &lt;g id=&quot;edge14&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q110&amp;#45;&amp;gt;q100&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M212.189,-25.5805C197.224,-31.7792 175.231,-40.8891 157.931,-48.055&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;156.275,-44.9525 148.376,-52.0129 158.954,-51.4196 156.275,-44.9525&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;181.56&quot; y=&quot;-40.6177&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M220.95,-25.6434C204.472,-32.4688 179.395,-42.8561 160.358,-50.7416&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;158.93,-47.5446 151.03,-54.6051 161.609,-54.0118 158.93,-47.5446&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;185.654&quot; y=&quot;-41.9925&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q110&amp;#45;&amp;gt;q101 --&gt;
 &lt;g id=&quot;edge15&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q110&amp;#45;&amp;gt;q101&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M236.499,-35.9211C253.519,-77.0105 296.253,-180.179 316.479,-229.01&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;313.263,-230.391 320.323,-238.29 319.73,-227.712 313.263,-230.391&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;272.989&quot; y=&quot;-136.265&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M245.374,-35.8301C263.304,-79.1162 310.144,-192.199 331.604,-244.008&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;328.482,-245.615 335.542,-253.515 334.949,-242.936 328.482,-245.615&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;283.489&quot; y=&quot;-143.719&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q111 --&gt;
 &lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q111&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;327.418&quot; cy=&quot;-59.1486&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;327.418&quot; cy=&quot;-59.1486&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;327.418&quot; y=&quot;-55.4486&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;111&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;342.632&quot; cy=&quot;-61.7591&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;342.632&quot; cy=&quot;-61.7591&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;342.632&quot; y=&quot;-58.0591&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;111&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q111&amp;#45;&amp;gt;q110 --&gt;
 &lt;g id=&quot;edge16&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q111&amp;#45;&amp;gt;q110&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M310.324,-52.0682C295.359,-45.8695 273.366,-36.7596 256.065,-29.5936&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;257.088,-26.229 246.51,-25.6357 254.41,-32.6962 257.088,-26.229&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;279.695&quot; y=&quot;-44.6309&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M325.387,-54.6157C308.909,-47.7903 283.832,-37.403 264.794,-29.5174&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;266.045,-26.2473 255.467,-25.654 263.366,-32.7144 266.045,-26.2473&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;290.091&quot; y=&quot;-45.8666&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q111&amp;#45;&amp;gt;q111 --&gt;
 &lt;g id=&quot;edge17&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q111&amp;#45;&amp;gt;q111&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M345.069,-65.5756C354.882,-66.7753 363.918,-64.633 363.918,-59.1486 363.918,-55.7209 360.388,-53.5986 355.345,-52.7819&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;355.09,-49.2804 345.069,-52.7216 355.049,-56.2803 355.09,-49.2804&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;367.418&quot; y=&quot;-55.4486&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M360.317,-67.9752C371.688,-69.5967 382.632,-67.5247 382.632,-61.7591 382.632,-57.7952 377.46,-55.5772 370.532,-55.1049&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;370.158,-51.6176 360.317,-55.543 370.458,-58.6112 370.158,-51.6176&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;387.632&quot; y=&quot;-58.0591&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q000&amp;#45;&amp;gt;q000 --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q000&amp;#45;&amp;gt;q000&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M107.396,-163.611C117.495,-165.017 127,-162.908 127,-157.283 127,-153.68 123.099,-151.519 117.64,-150.801&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;117.342,-147.305 107.396,-150.955 117.447,-154.304 117.342,-147.305&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;130.5&quot; y=&quot;-153.583&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M107.768,-172.351C119.287,-174.083 130.5,-172.032 130.5,-166.196 130.5,-162.184 125.2,-159.96 118.145,-159.525&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;117.582,-156.049 107.768,-160.041 117.93,-163.04 117.582,-156.049&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;135.5&quot; y=&quot;-162.496&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q000&amp;#45;&amp;gt;q001 --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q000&amp;#45;&amp;gt;q001&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M97.3955,-173.93C103.644,-189.015 112.957,-211.5 120.219,-229.032&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;117.159,-230.789 124.219,-238.689 123.626,-228.111 117.159,-230.789&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;105.307&quot; y=&quot;-205.281&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M97.4503,-182.975C104.325,-199.571 114.945,-225.21 122.926,-244.48&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;119.766,-245.995 126.826,-253.895 126.233,-243.316 119.766,-245.995&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;105.188&quot; y=&quot;-217.528&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q001&amp;#45;&amp;gt;q010 --&gt;
 &lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q001&amp;#45;&amp;gt;q010&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M147.796,-262.313C162.881,-268.562 185.366,-277.875 202.898,-285.137&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;201.976,-288.544 212.554,-289.137 204.655,-282.076 201.976,-288.544&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;171.847&quot; y=&quot;-277.525&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M150.539,-277.583C167.135,-284.457 192.774,-295.077 212.043,-303.059&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;210.88,-306.365 221.458,-306.959 213.558,-299.898 210.88,-306.365&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;176.291&quot; y=&quot;-294.121&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q001&amp;#45;&amp;gt;q011 --&gt;
 &lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q001&amp;#45;&amp;gt;q011&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M147.808,-248.517C188.505,-231.66 293.214,-188.288 342.145,-168.02&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;343.526,-171.237 351.425,-164.176 340.847,-164.769 343.526,-171.237&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;241.477&quot; y=&quot;-212.068&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M150.694,-263.618C193.755,-245.782 307.68,-198.592 359.528,-177.116&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;361.131,-180.24 369.031,-173.18 358.452,-173.773 361.131,-180.24&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;250.111&quot; y=&quot;-224.167&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q010&amp;#45;&amp;gt;q100 --&gt;
 &lt;g id=&quot;edge6&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q010&amp;#45;&amp;gt;q100&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M222.382,-279.407C205.607,-238.907 162.573,-135.013 142.181,-85.7843&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;145.366,-84.326 138.305,-76.4266 138.899,-87.0048 145.366,-84.326&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;178.782&quot; y=&quot;-186.395&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M231.181,-296.957C213.388,-254 166.382,-140.518 144.834,-88.4975&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;147.941,-86.8514 140.881,-78.952 141.474,-89.5302 147.941,-86.8514&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;183.008&quot; y=&quot;-196.527&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q010&amp;#45;&amp;gt;q101 --&gt;
 &lt;g id=&quot;edge7&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q010&amp;#45;&amp;gt;q101&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M247.465,-294.127C263.392,-289.446 286.589,-280.147 303.915,-271.674&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;305.555,-274.766 312.853,-267.086 302.358,-268.539 305.555,-274.766&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;272.19&quot; y=&quot;-286.7&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M256.451,-311.809C273.871,-306.669 300.145,-296.093 319.118,-286.773&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;320.74,-289.875 328.032,-282.188 317.538,-283.65 320.74,-289.875&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;282.785&quot; y=&quot;-303.091&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q011&amp;#45;&amp;gt;q110 --&gt;
 &lt;g id=&quot;edge8&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q011&amp;#45;&amp;gt;q110&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M355.259,-144.475C331.112,-120.329 278.68,-67.8973 249.65,-38.8667&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;252.011,-36.2777 242.465,-31.6815 247.061,-41.2275 252.011,-36.2777&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;298.954&quot; y=&quot;-95.4711&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M373.043,-153.347C347.422,-127.726 289.783,-70.0868 258.809,-39.1134&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;261.091,-36.4453 251.545,-31.8491 256.141,-41.3951 261.091,-36.4453&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;310.926&quot; y=&quot;-100.03&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q011&amp;#45;&amp;gt;q111 --&gt;
 &lt;g id=&quot;edge9&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q011&amp;#45;&amp;gt;q111&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M361.171,-140.636C354.998,-125.734 345.834,-103.61 338.612,-86.1738&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;341.682,-84.4388 334.621,-76.5395 335.214,-87.1177 341.682,-84.4388&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;346.391&quot; y=&quot;-117.205&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M378.941,-149.416C372.148,-133.017 361.698,-107.787 353.75,-88.5984&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;356.915,-87.0929 349.854,-79.1935 350.447,-89.7717 356.915,-87.0929&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;361.345&quot; y=&quot;-122.807&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
@@ -1788,7 +1923,7 @@ q111 -&amp;gt; q111 [label=&amp;quot;1&amp;quot;];
 &lt;!-- Generated by graphviz version 2.38.0 (20140413.2041)
  --&gt;
 &lt;!-- Title: Binary string DFA Pages: 1 --&gt;
-&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;342pt&quot; height=&quot;78pt&quot; viewBox=&quot;0.00 0.00 342.00 77.50&quot;&gt;
+&lt;svg role=&quot;img&quot; aria-label=&quot;Binary string DFA&quot; width=&quot;355pt&quot; height=&quot;78pt&quot; viewBox=&quot;0.00 0.00 355.00 77.50&quot;&gt;
 &lt;title&gt;Binary string DFA&lt;/title&gt;
 &lt;desc&gt;digraph &amp;quot;Binary string DFA&amp;quot; { 
 bgcolor=&amp;quot;transparent&amp;quot;;
@@ -1824,9 +1959,9 @@ q3 -&amp;gt; q4 [label=&amp;quot;0,1&amp;quot;];
 &lt;/g&gt;
 &lt;!-- q4 --&gt;
 &lt;g id=&quot;node2&quot; class=&quot;node&quot;&gt;&lt;title&gt;q4&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;315.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;315.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;315.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1..&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;328.5&quot; cy=&quot;-18.5&quot; rx=&quot;14.5&quot; ry=&quot;14.5&quot; /&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;328.5&quot; cy=&quot;-18.5&quot; rx=&quot;18.5&quot; ry=&quot;18.5&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;328.5&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1..&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q1&amp;#45;&amp;gt;q1 --&gt;
 &lt;g id=&quot;edge2&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q1&amp;#45;&amp;gt;q1&lt;/title&gt;
@@ -1836,31 +1971,31 @@ q3 -&amp;gt; q4 [label=&amp;quot;0,1&amp;quot;];
 &lt;/g&gt;
 &lt;!-- q2 --&gt;
 &lt;g id=&quot;node4&quot; class=&quot;node&quot;&gt;&lt;title&gt;q2&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;135&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;135&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;..1&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;138&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;138&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;..1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q1&amp;#45;&amp;gt;q2 --&gt;
 &lt;g id=&quot;edge3&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q1&amp;#45;&amp;gt;q2&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M74.0888,-18.5C83.659,-18.5 95.8172,-18.5 106.677,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;106.959,-22.0001 116.959,-18.5 106.959,-15.0001 106.959,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;95.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M74.3588,-18.5C84.7029,-18.5 98.059,-18.5 109.779,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;109.95,-22.0001 119.95,-18.5 109.95,-15.0001 109.95,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;97&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q3 --&gt;
 &lt;g id=&quot;node5&quot; class=&quot;node&quot;&gt;&lt;title&gt;q3&lt;/title&gt;
-&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;225&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;225&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;.1.&lt;/text&gt;
+&lt;ellipse fill=&quot;none&quot; stroke=&quot;black&quot; cx=&quot;233&quot; cy=&quot;-18.5&quot; rx=&quot;18&quot; ry=&quot;18&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;233&quot; y=&quot;-14.8&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;.1.&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q2&amp;#45;&amp;gt;q3 --&gt;
 &lt;g id=&quot;edge4&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q2&amp;#45;&amp;gt;q3&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M153.386,-18.5C165.76,-18.5 182.631,-18.5 196.78,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;196.95,-22.0001 206.95,-18.5 196.95,-15.0001 196.95,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;180&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0,1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M156.058,-18.5C169.606,-18.5 188.82,-18.5 204.531,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;204.736,-22.0001 214.736,-18.5 204.736,-15.0001 204.736,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;185.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0,1&lt;/text&gt;
 &lt;/g&gt;
 &lt;!-- q3&amp;#45;&amp;gt;q4 --&gt;
 &lt;g id=&quot;edge5&quot; class=&quot;edge&quot;&gt;&lt;title&gt;q3&amp;#45;&amp;gt;q4&lt;/title&gt;
-&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M243.064,-18.5C255.392,-18.5 272.316,-18.5 286.597,-18.5&quot; /&gt;
-&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;286.883,-22.0001 296.883,-18.5 286.883,-15.0001 286.883,-22.0001&quot; /&gt;
-&lt;text text-anchor=&quot;middle&quot; x=&quot;270&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0,1&lt;/text&gt;
+&lt;path fill=&quot;none&quot; stroke=&quot;black&quot; d=&quot;M251.149,-18.5C264.685,-18.5 283.845,-18.5 299.585,-18.5&quot; /&gt;
+&lt;polygon fill=&quot;black&quot; stroke=&quot;black&quot; points=&quot;299.824,-22.0001 309.824,-18.5 299.824,-15.0001 299.824,-22.0001&quot; /&gt;
+&lt;text text-anchor=&quot;middle&quot; x=&quot;280.5&quot; y=&quot;-22.3&quot; font-family=&quot;Times,serif&quot; font-size=&quot;14.00&quot;&gt;0,1&lt;/text&gt;
 &lt;/g&gt;
 &lt;/g&gt;
 &lt;/svg&gt;
