@@ -28,9 +28,12 @@ Something funny to note about the dependencies I've mentioned so far -- `docopt`
 
 In the project where I had benchmarks to compare, I generated different modules with the names of their implementation technique, all with the same benchmarks. This is fairly easy to [set up with a macro](https://github.com/Apanatshka/dnfa/blob/5cdb4307a06aee51f2d19f2619e0ff2e5e49af18/benches/basic.rs). The result is the same benchmark name, with different prefixes for the different implementations. So in the port of `benchcmp`, I added an option to provide two module names first, and the one or more files to read. The files would still contain the benchmark results, but the module names would be used to pick the benchmarks to compare. 
 
-# The current help message
+# The current interface
+
+Help message:
 
 ```
+$ cargo benchcmp --help
 Compares Rust micro-benchmark results.
 
 Usage:
@@ -59,6 +62,22 @@ Options:
     --regressions        Show only regressions.
 ```
 
+An example output:
+
+```
+$ cd aho-corasick
+$ cargo bench | cargo benchcmp --variance --threshold 5 dense:: dense_boxed:: -
+ name                                dense:: ns/iter               dense_boxed:: ns/iter         diff ns/iter  diff % 
+ ac_one_prefix_byte_every_match      112,957 (+/- 1480) (88 MB/s)  150,581 (+/- 814) (66 MB/s)         37,624  33.31% 
+ ac_one_prefix_byte_random           16,096 (+/- 292) (621 MB/s)   20,273 (+/- 60) (493 MB/s)           4,177  25.95% 
+ ac_ten_bytes                        58,588 (+/- 218) (170 MB/s)   108,092 (+/- 683) (92 MB/s)         49,504  84.50% 
+ ac_ten_diff_prefix                  58,601 (+/- 215) (170 MB/s)   108,082 (+/- 712) (92 MB/s)         49,481  84.44% 
+ ac_ten_one_prefix_byte_every_match  112,920 (+/- 1454) (88 MB/s)  150,561 (+/- 824) (66 MB/s)         37,641  33.33% 
+ ac_ten_one_prefix_byte_random       19,181 (+/- 251) (521 MB/s)   23,684 (+/- 427) (422 MB/s)          4,503  23.48% 
+ ac_two_one_prefix_byte_every_match  112,934 (+/- 2037) (88 MB/s)  150,571 (+/- 1618) (66 MB/s)        37,637  33.33% 
+ ac_two_one_prefix_byte_random       16,511 (+/- 142) (605 MB/s)   21,009 (+/- 94) (476 MB/s)           4,498  27.24% 
+```
+
 # Things to come
 
 I'm not done with this tool just yet. I did open a PR to the original repo and got a great code review from BurntSushi. He published it to [crates.io](https://crates.io/) too, and beat me to the punch by posting on Reddit, but I hope this post was still interesting to you. Here's some things I've been working on:
@@ -69,6 +88,12 @@ Already during the first code review I figured out that my Rust port didn't get 
 
 Anyway, that happened, I added right-justification. But the crate also gives the option to add colours to your table. So a simple change to the code, and now `benchcmp` will give you red rows for regressions and green rows for improvements ([Pull Request](https://github.com/BurntSushi/cargo-benchcmp/pull/9)). In my experience, this makes the options show only one or the other obsolete, but it doesn't hurt so it's still in there. 
 
+```
+$ cd aho-corasick
+$ cargo bench | cargo benchcmp --variance dense:: dense_boxed:: -
+```
+![Coloured output of the tool, with a bold header line, a lot of green (improvement) lines and two read (regression) lines]({{url}}/images{{page.id}}/screenshot_coloured_output.png)
+
 ## N-way comparison: Plotting
 
 Warning: This feature may not actually make it into the tool proper. You can find [the discussion around that on github](https://github.com/BurntSushi/cargo-benchcmp/issues/8). For now this functionality lives in a [branch](https://github.com/Apanatshka/cargo-benchcmp/tree/plot). 
@@ -77,14 +102,16 @@ Comparing two implementations or commits at a time is great for day-to-day use a
 
 The plot command compares by file or by module, any benchmark test that is present in multiple files/modules. It generated images in `target/benchcmp`, one file per benchmark, with a barchart/histogram plot + error bars for the variance. To generate the plots it uses `gnuplot`, which should be installed separately and put on your `PATH`. I suppose that's a weakness, but it was the easiest way to do this. Any suggestions to cut or simplify that dependency would be much appreciated, but I couldn't find a pure Rust plotting crate. If you're wondering, I don't use the [`gnuplot` crate](https://crates.io/crates/gnuplot), though I did try it at first. In the end it was easier to generate a gnuplot script myself than work with the limited subset of the crate, which does shallow bindings anyway. On the upside, I got to learn about gnuplot, which is a very handy (and powerful) tool indeed!
 
+![A bar plot with whiskers that compares benchmark test ac_ten_one_prefix_byte_every_match for all implementations of aho-corasick (dense, dense_boxed, full, full_overlap and sparse)](https://cloud.githubusercontent.com/assets/1237863/17133147/362f7c22-5325-11e6-909a-bf76a8ecc85a.png)
+
 ## Tests
 
-One of the things that came up after the first release of the Rust version of `cargo-benchcmp` is tests. I kind of didn't write any... So I [asked](https://github.com/BurntSushi/cargo-benchcmp/issues/3) for a little advice on what to test, and got to work. So now I can report that `cargo-benchcmp` is pretty well-tested with [`quickcheck`](https://github.com/BurntSushi/quickcheck) for all the unit tests and [`second_law`](https://github.com/nathanross/second_law) for the integration tests ([Pull Request](https://github.com/BurntSushi/cargo-benchcmp/pull/10)). 
+One of the things that came up after the first release of the Rust version of `cargo-benchcmp` is tests. I kind of didn't write any... So I [asked](https://github.com/BurntSushi/cargo-benchcmp/issues/3) for a little advice on what to test, and got to work. So now I can report that `cargo-benchcmp` is pretty well-tested with [`quickcheck`](https://github.com/BurntSushi/quickcheck) for all the unit tests and [`second_law`](https://github.com/nathanross/second_law) for the integration tests ([Pull Request](https://github.com/BurntSushi/cargo-benchcmp/pull/10)). So if you need practical examples of quickcheck properties, implementing your own `Arbitrary` instances, or integration testing a Rust commandline tool, or if you're just curious, have a look :) 
 
 ## Better statistics
 
-There is [one last issue](https://github.com/BurntSushi/cargo-benchcmp/issues/4) on the repo for using better statistics when comparing benchmark measurements. I haven't looked into this one yet. We may need more information than `cargo bench` currently provides. Feel free you look into this one yourself dear reader. Just remember to outline your plan in the issue before you start doing major work. I made that mistake with the plotting feature...
+There is [one last issue](https://github.com/BurntSushi/cargo-benchcmp/issues/4) on the repo for using better statistics when comparing benchmark measurements. I haven't looked into this one yet. We may need more information than `cargo bench` currently provides. Feel free you look into this one yourself dear reader. Just remember to outline your plan in the issue before you start doing major work. I made the mistake not to do that with the plotting feature, and now that work might not survive... But at least it got me a bit more to write about here ^^
 
-## Showing comparisons with the tool
+## Real world comparisons with the tool
 
-This post is a bit low on examples of `cargo benchcmp` output. I want to write a longer post on the implementation of finite automata with benchmark comparisons, along with performance traces and optimisations. But that may take some more time because I'm still figuring out how to use `perf` and `callgrind` etc., and my implementation is still squarely beaten by BurntSushi's [`aho-corasick`](https://github.com/burntsushi/aho-corasick) crate. But, you know, whatever ¯\\\_(ツ)\_/¯
+This post uses only small examples of `cargo benchcmp` output. I want to write a longer post on the implementation of finite automata with benchmark comparisons, along with performance traces and optimisations. But that may take some more time because I'm still figuring out how to use `perf` and `callgrind` etc., and my implementation is still squarely beaten by BurntSushi's [`aho-corasick`](https://github.com/burntsushi/aho-corasick) crate. But, you know, whatever ¯\\\_(ツ)\_/¯
