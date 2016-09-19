@@ -1,99 +1,75 @@
 ---
 layout:   post
-title:    "Implementing Automata"
-date:     2016-09-18
+title:    "Implementing Finite Automata"
+date:     2016-09-25
 category: CompSci
 tags:     [theory, automata, computation, push-down automata, stack, context-free languages, context-free grammar, context-free]
 ---
 
-This is post number three in a [series]({% post_url 2016-03-28-theory-of-computation %}) on Finite Automata. This is the promised "implementation-heavy" post, where we go into implementing automata for real and for useful things. 
+This is post number three in a [series]({% post_url 2016-03-28-theory-of-computation %}) on Finite Automata. This is the promised "implementation-heavy" post, where we go into implementing automata for real and useful things. 
 
-As always the programming language is Rust, and this time I've actually had a bit of practice with the language. Where in the [previous post on Finite Automata]({% post_url 2016-04-10-finite-automata %}) we went through examples of direct encodings of specific automata, in this post we'll look at more reusable code. I hope to publish the code discussed here in a crate eventually. 
+As always the programming language is Rust. By now I've actually had a bit of practice with the language, so hopefully the code will be less naive. Where in the [previous post on Finite Automata]({% post_url 2016-04-10-finite-automata %}) we went through examples of direct encodings of specific automata, in this post we'll look at more reusable code. I hope to publish the code discussed here in a crate eventually. 
 
 # Non-deterministic Finite Automata
 
-Quick recap: The so-called NFA goes from state to state based on the input symbol, and once we're out of input if the state is a "final" state, we accept the input. The non-deterministic part means that from any state an input symbol can direct us to zero or more other states, so we can be in multiple states at once.
+Quick recap: The so-called NFA goes from state to state based on the input symbol. Once we're out of input symbols, if the state is a "final" state, we accept the input. The non-deterministic part means that from any state an input symbol can direct us to zero or more other states, so we can be in multiple states at once.
 
-So let's look at a general framework for NFAs:
+So let's look at a general framework for NFAs (don't panic, explanation below):
 
 ```rust
-pub type Input = u8;
-pub type StateNumber = usize;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::hash::Hash;
 
-#[derive(Clone, Default)]
-struct NFAState {
-    transitions: BTreeMap<Input, BTreeSet<StateNumber>>,
-    is_final: bool,
+#[derive(Clone)]
+struct NFAHashState<Input: Eq + Hash, StateRef, Payload> {
+    transitions: HashMap<Input, HashSet<StateRef>>,
+    payload: Option<Payload>,
 }
 
-#[derive(Default)]
-pub struct NFA {
+pub struct NFA<Input: Eq + Hash, Payload> {
     alphabet: Vec<Input>,
-    states: Vec<NFAState>,
-}
-
-impl NFAState {
-    fn new() -> Self {
-        NFAState {
-            transitions: BTreeMap::new(),
-            is_final: false,
-        }
-    }
-}
-
-impl NFA {
-    pub fn new() -> Self {
-        NFA {
-            alphabet: Vec::new(),
-            states: Vec::new(),
-        }
-    }
+    states: Vec<NFAHashState<Input, usize, Payload>>,
 }
 ```
 
-Don't worry, we'll look into optimisation and generalisation later. For now we have an NFA that works on bytes (`u8`) and can have at most `usize::MAX` states. The bytes line up well with ASCII characters, which works well enough for this example. 
+I *did* say **general framework**. Generics galore. Let's take it apart:
 
-An `NFAState` has transitions to sets of other states, and can be marked as final. We might generalise that final boolean to some kinds of payload that can be queried to see if it counts as final. The `NFA` itself records the entire alphabet, which will be useful later. It also contains the whole vector of `states`, and a `StateNumber` is an offset in this vector. 
+We have a state of an NFA which can take certain `Input`, uses `StateNumber` to refer to other states, and has a `Payload`. I hope the first two are clear. The `Payload` refers to data that the automaton may return when it's a final state. Inside the struct is the transition map from input to a set of state references, and the `Option<Payload>` where `None` means non-final state and `Some(payload)` means a final state with a `payload`. As you can see, `HashMap` and `HashSet` are used, hence the `Input: Eq + Hash`. 
 
-## Testing an input
+The `NFA` struct holds the states and the alphabet. It is also generic over `Input` and `Payload`. Maybe it should really be generic over the exact state struct rather than the `Payload`, but I'm not sure as that would require a `NFAState` trait.. Whatever, we're going with this for now. 
+
+## NFA execution
 
 For the simplest interaction with an existing NFA, we just supply it some input and see if it "accepts" it. Let's look into that first:
 
 ```rust
 pub const AUTO_START: StateNumber = 0;
 
-impl NFA {
-    // ...
-    
-    pub fn apply(&self, input: &[Input]) -> bool {
-        let mut cur_states = BTreeSet::new();
-        let mut nxt_states = BTreeSet::new();
+impl<Input: Eq + Hash, Payload: Clone> NFA<Input, Payload> {
+    pub fn apply<I: AsRef<[Input]>>(&self, input: I) -> Option<Payload> {
+        let mut cur_states = HashSet::new();
+        let mut nxt_states = HashSet::new();
         cur_states.insert(AUTO_START);
-        for &byte in input {
-            for cur_state in cur_states {
-                if let Some(nxts) = self.states[cur_state].transitions.get(&byte) {
+        for ref byte in input.as_ref() {
+            for &cur_state in &cur_states {
+                if let Some(nxts) = self.states[cur_state].transitions.get(byte) {
                     nxt_states.extend(nxts);
                 }
             }
-            cur_states = nxt_states;
-            nxt_states = BTreeSet::new();
+            cur_states.clear();
+            mem::swap(&mut cur_states, &mut nxt_states);
         }
-        cur_states.iter().any(|&state| self.states[state].is_final)
+        cur_states.iter().filter_map(|&state| self.states[state].payload.clone()).next()
     }
 }
 ```
 
-(For usability, we should really use `input: AsRef<[Input]>`, but I only just noticed, and I'm too lazy to change it right now). Let's see what we have here:
+The first generics should look familiar. We do require `Payload: Clone` so we can give back an `Option<Payload>`. The `apply` method uses `AsRef` to be able to take `Vec<Input>` directly, or `&str` if `Input = u8`. 
 
-1. We take some input and will return a `bool`. As expected.
-2. We create a set for the current states and for the next states.
-3. We start at a predefined start state. 
-4. For each byte we take a step.
-    1. For each current state we try to follow the transition that corresponds to the byte from the input. If it exists the states from the transition are added to the next states. 
-    2. After that we rename the next states the current states and reset the next states to empty. 
-5. We check if any current state is a final state.
+The implementation creates two sets: current states and next states. We start in `AUTO_START`, a predefined (constant) start state. For every `symbol` in the `input` we go over the current states. We use the `symbol` and `cur_state` to find `nxts` (next states) and add them to the `nxt_states` set. After going through all current states we clear the `cur_states` and swap it with the `nxt_states`. So the `nxt_states` is empty again and the `cur_states` are filled for the next `symbol`. This `clear` and `swap` is slightly more memory efficient than doing `cur_states = nxt_states; nxt_states = HashSet::new();` because `clear` doesn't throw away the already allocated memory. Anyway, after all the input has been processed, we grab the first payload we can find. 
 
-We're not focussing on performance here, but obviously building these sets (even if they were `HashSet`s) in the inner loop is kind of terrible. Let's fix that, by turning the NFA into a DFA, a *Deterministic* Finite Automaton. Basically we'll need to pre-compute there sets of states you can be in and make those single states in the DFA. This mean we have an potential explosion of states on our hands, which could make things worse.. But let's try it anyway. 
+We're not focussing on performance here, but obviously building these sets in the inner loop is kind of terrible. Let's fix that, by turning the NFA into a DFA, a *Deterministic* Finite Automaton. Basically we'll need to pre-compute there sets of states you can be in and make those single states in the DFA. This mean we have an potential explosion of states on our hands, which could make things worse.. But let's try it anyway. 
 
 ## Powerset Construction (NFA &rarr; DFA)
 
