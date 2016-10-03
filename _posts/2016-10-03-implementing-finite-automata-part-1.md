@@ -6,7 +6,7 @@ category: CompSci
 tags:     [theory, automata, computation, push-down automata, stack, context-free languages, context-free grammar, context-free]
 ---
 
-This is post number three in a [series]({% post_url 2016-03-28-theory-of-computation %}) on Finite Automata. This is the promised "implementation-heavy" post, where we go into implementing automata for real and useful things. 
+This is post number three in a [series]({% post_url 2016-03-28-theory-of-computation %}) on Automata (in the formal languages / regex / parsing sense). This is the promised "implementation-heavy" post, where we go into implementing automata for real and useful things. 
 
 As always the programming language is Rust. By now I've actually had a bit of practice with the language, so hopefully the code will be less naive. Where in the [previous post on Finite Automata]({% post_url 2016-04-10-finite-automata %}) we went through examples of direct encodings of specific automata, in this post we'll look at more reusable code. I hope to publish the code discussed here in a crate eventually. 
 
@@ -21,7 +21,6 @@ So let's look at a general framework for NFAs (don't panic, explanation below):
 ```rust
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::hash::Hash;
 
 struct NFAHashState<Input, StateRef, Payload> {
     transitions: HashMap<Input, HashSet<StateRef>>,
@@ -145,9 +144,7 @@ fn psc_rec_helper<Input, Payload, F>(nfa: &NFA<Input, Payload>,
             nxt_num
         });
 
-        states[cur_num]
-            .transitions
-            .insert(symbol.clone(), nxt_num);
+        states[cur_num].transitions.insert(symbol.clone(), nxt_num);
     }
 }
 ```
