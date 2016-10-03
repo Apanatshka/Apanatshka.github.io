@@ -6,8 +6,8 @@
 </description>
     <link>http://Apanatshka.github.io/</link>
     <atom:link href="http://Apanatshka.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Mon, 03 Oct 2016 19:09:11 +0100</pubDate>
-    <lastBuildDate>Mon, 03 Oct 2016 19:09:11 +0100</lastBuildDate>
+    <pubDate>Mon, 03 Oct 2016 19:17:05 +0100</pubDate>
+    <lastBuildDate>Mon, 03 Oct 2016 19:17:05 +0100</lastBuildDate>
     <generator>Jekyll v3.2.1</generator>
     
       <item>
@@ -16,7 +16,7 @@
 
 &lt;p&gt;As always the programming language is Rust. By now I’ve actually had a bit of practice with the language, so hopefully the code will be less naive. Where in the &lt;a href=&quot;/compsci/2016/04/10/finite-automata/&quot;&gt;previous post on Finite Automata&lt;/a&gt; we went through examples of direct encodings of specific automata, in this post we’ll look at more reusable code. I hope to publish the code discussed here in a crate eventually.&lt;/p&gt;
 
-&lt;p&gt;This is part one out of two. It’s taking too long to write everything in one post, so I decided to split it up and publish this part first.&lt;/p&gt;
+&lt;p&gt;This is part one out of two. It’s taking too long to write everything in one post, so I decided to split it up and publish this part first. The full code of this blogpost is &lt;a href=&quot;https://github.com/Apanatshka/dnfa/tree/blogpost-part-1&quot;&gt;tagged on github&lt;/a&gt;.&lt;/p&gt;
 
 &lt;h1 id=&quot;non-deterministic-finite-automata&quot;&gt;Non-deterministic Finite Automata&lt;/h1&gt;
 
