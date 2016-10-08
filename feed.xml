@@ -6,8 +6,8 @@
 </description>
     <link>http://Apanatshka.github.io/</link>
     <atom:link href="http://Apanatshka.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Mon, 03 Oct 2016 19:17:05 +0100</pubDate>
-    <lastBuildDate>Mon, 03 Oct 2016 19:17:05 +0100</lastBuildDate>
+    <pubDate>Sat, 08 Oct 2016 13:25:59 +0100</pubDate>
+    <lastBuildDate>Sat, 08 Oct 2016 13:25:59 +0100</lastBuildDate>
     <generator>Jekyll v3.2.1</generator>
     
       <item>
@@ -362,15 +362,17 @@ Now that we’ve discovered a new state we didn’t know about before, we’ll a
         
         <category>computation</category>
         
-        <category>push-down automata</category>
+        <category>finite automata</category>
         
-        <category>stack</category>
+        <category>nfa</category>
         
-        <category>context-free languages</category>
+        <category>dfa</category>
         
-        <category>context-free grammar</category>
+        <category>powerset construction</category>
         
-        <category>context-free</category>
+        <category>regular language</category>
+        
+        <category>rust</category>
         
         
         <category>CompSci</category>
