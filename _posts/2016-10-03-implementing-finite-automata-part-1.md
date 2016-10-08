@@ -3,7 +3,7 @@ layout:   post
 title:    "Implementing Finite Automata (Part 1)"
 date:     2016-10-03
 category: CompSci
-tags:     [theory, automata, computation, push-down automata, stack, context-free languages, context-free grammar, context-free]
+tags:     [theory, automata, computation, finite automata, nfa, dfa, powerset construction, regular language, rust]
 ---
 
 This is post number three in a [series]({% post_url 2016-03-28-theory-of-computation %}) on Automata (in the formal languages / regex / parsing sense). This is the promised "implementation-heavy" post, where we go into implementing automata for real and useful things. 
