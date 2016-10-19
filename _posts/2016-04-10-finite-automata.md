@@ -126,7 +126,7 @@ Although this NFA is easier to describe, it's still always translatable to a DFA
 
 1. The *alphabet* stays the same.
 2. We use the powerset of the states of the NFA to create the states for the DFA. (That's where the exponential blowup comes from, **if** all those states are used.) The state with the {%latex%}\emptyset{%endlatex%} is the *stuck state* that we already saw earlier. 
-3. The transitions are based on the simulation of the NFA. So if you are in {%latex%}\{q_o, q_1, q_3\}{%endlatex%} then the transition with symbol {%latex%}\sigma_2{%endlatex%} takes you to the state in the DFA that is labelled with states of the NFA that are reachable with {%latex%}\sigma_2{%endlatex%} from the states {%latex%}q_o{%endlatex%}, {%latex%}q_1{%endlatex%} and {%latex%}q_3{%endlatex%}. 
+3. The transitions are based on the simulation of the NFA. So if you are in {%latex%}\{q_0, q_1, q_3\}{%endlatex%} then the transition with symbol {%latex%}\sigma_2{%endlatex%} takes you to the state in the DFA that is labelled with states of the NFA that are reachable with {%latex%}\sigma_2{%endlatex%} from the states {%latex%}q_0{%endlatex%}, {%latex%}q_1{%endlatex%} and {%latex%}q_3{%endlatex%}. 
 4. The start state is still the same although now called {%latex%}\{q_o\}{%endlatex%} instead of {%latex%}q_o{%endlatex%}. 
 5. The final states are every state that has an NFA final state in its set. 
 

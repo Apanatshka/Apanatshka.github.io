@@ -3,14 +3,14 @@ layout:   post
 title:    "Implementing Finite Automata (Part 1)"
 date:     2016-10-03
 category: CompSci
-tags:     [theory, automata, computation, finite automata, nfa, dfa, powerset construction, regular language, rust]
+tags:     [automata, computation, finite automata, nfa, dfa, powerset construction, regular language, rust]
 ---
 
 This is post number three in a [series]({% post_url 2016-03-28-theory-of-computation %}) on Automata (in the formal languages / regex / parsing sense). This is the promised "implementation-heavy" post, where we go into implementing automata for real and useful things. 
 
 As always the programming language is Rust. By now I've actually had a bit of practice with the language, so hopefully the code will be less naive. Where in the [previous post on Finite Automata]({% post_url 2016-04-10-finite-automata %}) we went through examples of direct encodings of specific automata, in this post we'll look at more reusable code. I hope to publish the code discussed here in a crate eventually. 
 
-This is part one out of two. It's taking too long to write everything in one post, so I decided to split it up and publish this part first. The full code of this blogpost is [tagged on github](https://github.com/Apanatshka/dnfa/tree/blogpost-part-1). 
+This is part one out of <del>two</del> <ins>three</ins>. It's taking too long to write everything in one post, so I decided to split it up and publish this part first. The full code of this blogpost is [tagged on github](https://github.com/Apanatshka/dnfa/tree/blogpost-part-1). 
 
 # Non-deterministic Finite Automata
 
