@@ -240,8 +240,10 @@ A transitive closure algorithm is nice and dandy, but we're not sure getting the
 
 Of course topological order doesn't actually work when you have cycles. But in our case we know how we want to interpret cycles: as a single state. So if we do the right combination of topo-sort + cycle detection, we can efficiently build our NFA without epsilons. 
 
-To the code then! What we'll do is a depth-first search, which should be linear time if we ignore the costs copying the transitions. That's a stupid way of saying we're probably still in the quadratic or cubic ballpark like the Warshall algorithm I linked to earlier, but whatever ¯\\\_(ツ)\_/¯
+To the code then! What we'll do is a depth-first search[^2], which should be linear time[^3] if we ignore the costs copying the transitions. That's a stupid way of saying we're probably still in the quadratic or cubic ballpark like the Warshall algorithm I linked to earlier, but whatever ¯\\\_(ツ)\_/¯
 
 # Footnotes
 
 [^1]: reachable in one epsilon-transition
+[^2]: it's cool that it's that simple, and it's one of the algorithms mentioned on the Wikipedia. Also, my friend suggested this too, thanks Daniël!
+[^3]: even cooler: this problem is in complexity class [NC](https://en.wikipedia.org/wiki/NC_(complexity)) which means you can get polylogarithmic time complexity when you on a parallel computer with a polynomial number of processors. 
