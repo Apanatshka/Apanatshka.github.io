@@ -244,6 +244,6 @@ To the code then! What we'll do is a depth-first search[^2], which should be lin
 
 # Footnotes
 
-[^1]: reachable in one epsilon-transition
-[^2]: it's cool that it's that simple, and it's one of the algorithms mentioned on the Wikipedia. Also, my friend suggested this too, thanks Daniël!
-[^3]: even cooler: this problem is in complexity class [NC](https://en.wikipedia.org/wiki/NC_(complexity)) which means you can get polylogarithmic time complexity when you on a parallel computer with a polynomial number of processors. 
+[^1]: Reachable in one epsilon-transition
+[^2]: It's cool that it's that simple, and it's one of the algorithms mentioned on the Wikipedia. The friend I mentioned earlier also suggested this (thanks Daniël!)
+[^3]: Even cooler: this problem is in complexity class [NC](https://en.wikipedia.org/wiki/NC_(complexity)) which means you can get polylogarithmic time complexity when you on a parallel computer with a polynomial number of processors. I'm not going to do anything with that here, but maybe this inspires you to try something? :)
