@@ -1,7 +1,7 @@
 ---
 layout:   post
 title:    "Implementing Finite Automata (Part 2)"
-date:     2016-10-16
+date:     2016-11-12
 category: CompSci
 tags:     [theory, automata, computation, finite automata, nfa, dfa, powerset construction, regular language, rust]
 ---
