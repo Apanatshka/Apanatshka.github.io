@@ -4,10 +4,10 @@
     <title>Whatever</title>
     <description>A web log. Mostly about computer science-y stuff. 
 </description>
-    <link>http://localhost:4000/</link>
-    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sat, 12 Nov 2016 19:17:03 +0100</pubDate>
-    <lastBuildDate>Sat, 12 Nov 2016 19:17:03 +0100</lastBuildDate>
+    <link>http://Apanatshka.github.io/</link>
+    <atom:link href="http://Apanatshka.github.io/feed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Wed, 16 Nov 2016 08:25:35 +0100</pubDate>
+    <lastBuildDate>Wed, 16 Nov 2016 08:25:35 +0100</lastBuildDate>
     <generator>Jekyll v3.3.0</generator>
     
       <item>
@@ -1059,8 +1059,8 @@ q4 -&amp;gt; q5 [label=&amp;quot;0&amp;quot;];
 &lt;/div&gt;
 </description>
         <pubDate>Sat, 12 Nov 2016 00:00:00 +0100</pubDate>
-        <link>http://localhost:4000/compsci/2016/11/12/implementing-finite-automata-part-2/</link>
-        <guid isPermaLink="true">http://localhost:4000/compsci/2016/11/12/implementing-finite-automata-part-2/</guid>
+        <link>http://Apanatshka.github.io/compsci/2016/11/12/implementing-finite-automata-part-2/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/11/12/implementing-finite-automata-part-2/</guid>
         
         <category>theory</category>
         
@@ -1428,8 +1428,8 @@ Now that we’ve discovered a new state we didn’t know about before, we’ll a
 &lt;/div&gt;
 </description>
         <pubDate>Mon, 03 Oct 2016 00:00:00 +0200</pubDate>
-        <link>http://localhost:4000/compsci/2016/10/03/implementing-finite-automata-part-1/</link>
-        <guid isPermaLink="true">http://localhost:4000/compsci/2016/10/03/implementing-finite-automata-part-1/</guid>
+        <link>http://Apanatshka.github.io/compsci/2016/10/03/implementing-finite-automata-part-1/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/10/03/implementing-finite-automata-part-1/</guid>
         
         <category>automata</category>
         
@@ -1565,8 +1565,8 @@ $ cargo bench | cargo benchcmp --variance dense:: dense_boxed:: -
 &lt;p&gt;This post uses only small examples of &lt;code class=&quot;highlighter-rouge&quot;&gt;cargo benchcmp&lt;/code&gt; output. I want to write a longer post on the implementation of finite automata with benchmark comparisons, along with performance traces and optimisations. But that may take some more time because I’m still figuring out how to use &lt;code class=&quot;highlighter-rouge&quot;&gt;perf&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;callgrind&lt;/code&gt; etc., and my implementation is still squarely beaten by BurntSushi’s &lt;a href=&quot;https://github.com/burntsushi/aho-corasick&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;aho-corasick&lt;/code&gt;&lt;/a&gt; crate. But, you know, whatever ¯\_(ツ)_/¯&lt;/p&gt;
 </description>
         <pubDate>Sun, 04 Sep 2016 00:00:00 +0200</pubDate>
-        <link>http://localhost:4000/compsci/2016/09/04/porting-cargo-benchcmp/</link>
-        <guid isPermaLink="true">http://localhost:4000/compsci/2016/09/04/porting-cargo-benchcmp/</guid>
+        <link>http://Apanatshka.github.io/compsci/2016/09/04/porting-cargo-benchcmp/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/09/04/porting-cargo-benchcmp/</guid>
         
         <category>rust</category>
         
@@ -1739,8 +1739,8 @@ sed -i &lt;span class=&quot;s1&quot;&gt;'s:ZSH_THEME=&quot;robbyrussell&quot;:ZS
 &lt;p&gt;Sorry, but I don’t develop on windows. I think you can probably reuse most of these instructions if you can get a proper terminal emulator. Or you could switch to a linux or whatever ¯\_(ツ)_/¯&lt;/p&gt;
 </description>
         <pubDate>Sat, 23 Jul 2016 00:00:00 +0200</pubDate>
-        <link>http://localhost:4000/compsci/2016/07/23/pretty-terminal/</link>
-        <guid isPermaLink="true">http://localhost:4000/compsci/2016/07/23/pretty-terminal/</guid>
+        <link>http://Apanatshka.github.io/compsci/2016/07/23/pretty-terminal/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/07/23/pretty-terminal/</guid>
         
         <category>terminal</category>
         
@@ -2955,8 +2955,8 @@ Z1 -- Plus -- Z2 -- Star -- O1;
 &lt;/div&gt;
 </description>
         <pubDate>Sun, 15 May 2016 00:00:00 +0200</pubDate>
-        <link>http://localhost:4000/compsci/2016/05/15/pushy-automata/</link>
-        <guid isPermaLink="true">http://localhost:4000/compsci/2016/05/15/pushy-automata/</guid>
+        <link>http://Apanatshka.github.io/compsci/2016/05/15/pushy-automata/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/05/15/pushy-automata/</guid>
         
         <category>theory</category>
         
@@ -3511,8 +3511,8 @@ A regular expression that matches exactly &lt;code class=&quot;highlighter-rouge
 &lt;p&gt;I had another week to read other blog posts, including an excellent one about &lt;a href=&quot;http://blog.burntsushi.net/transducers/&quot;&gt;automata in rust for string indexes&lt;/a&gt; and now I feel bad for not giving you the Rust code for every algorithm I explained. So, I might just postpone the blog post about context-free languages and dive into regex first. I doubt I’ll do better than the existing &lt;a href=&quot;https://crates.io/crates/regex&quot;&gt;regex crate&lt;/a&gt;, but, you know, whatever ¯\_(ツ)_/¯&lt;/p&gt;
 </description>
         <pubDate>Sun, 10 Apr 2016 00:00:00 +0200</pubDate>
-        <link>http://localhost:4000/compsci/2016/04/10/finite-automata/</link>
-        <guid isPermaLink="true">http://localhost:4000/compsci/2016/04/10/finite-automata/</guid>
+        <link>http://Apanatshka.github.io/compsci/2016/04/10/finite-automata/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/04/10/finite-automata/</guid>
         
         <category>theory</category>
         
@@ -3550,8 +3550,8 @@ A regular expression that matches exactly &lt;code class=&quot;highlighter-rouge
 &lt;p&gt;This stuff is very theorical, so to spice things up I’m going to try to add a lot of code snippets. For the programming language I picked &lt;a href=&quot;https://www.rust-lang.org/&quot;&gt;Rust&lt;/a&gt; because I’d like to learn the language, and this seems like a good opportunity to try it out. That does mean that I’ll be figuring out the language as I write the posts, so I’ll probably make mistakes. But whatever, that’s how you learn :)&lt;/p&gt;
 </description>
         <pubDate>Mon, 28 Mar 2016 00:00:00 +0200</pubDate>
-        <link>http://localhost:4000/compsci/2016/03/28/theory-of-computation/</link>
-        <guid isPermaLink="true">http://localhost:4000/compsci/2016/03/28/theory-of-computation/</guid>
+        <link>http://Apanatshka.github.io/compsci/2016/03/28/theory-of-computation/</link>
+        <guid isPermaLink="true">http://Apanatshka.github.io/compsci/2016/03/28/theory-of-computation/</guid>
         
         <category>announcement</category>
         
