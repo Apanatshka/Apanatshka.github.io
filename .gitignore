@@ -3,3 +3,4 @@ _bin/
 .sass-cache
 .bundle/
 .jekyll-metadata
+Gemfile.lock
