@@ -2,7 +2,7 @@
 layout:   post
 title:    "Types, units and quantities"
 date:     2017-02-15
-category: Meta
+category: CompSci
 tags:     [units, physical quantity, Rust, programming, patterns, types]
 ---
 
