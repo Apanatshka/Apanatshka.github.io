@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Pretty Terminal</title>
+    <meta name="description" content="A web log. Mostly about computer science-y stuff. 
+">
+
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="canonical" href="http://blog.jeffsmits.net/compsci/2016/07/23/pretty-terminal/">
+    
+    <link rel="stylesheet" type="text/css" href="/css/katex.min.css">
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">Whatever</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Pretty Terminal</h1>
+    <p class="post-meta">Jul 23, 2016</p>
+  </header>
+
+  <article class="post-content">
+    <p>This is just a short post about my new terminal setup. I think it’s both pretty and useful. For example, it gives me the current time and info about version control when I’m in a directory with vcs:</p>
+
+<p><img src="/images/compsci/2016/07/23/pretty-terminal/iterm2_gogh_aci_source_code_pro_zsh_powerlevel9k.png" alt="A Zsh terminal, with the powerlevel9k theme (default settings), and the Gogh Aci colour scheme on the font Source Code Pro" /></p>
+
+<p>Skip to the <a href="#tldr">end</a> for terse instructions/commands for mac and linux.</p>
+
+<h2 id="terminal">Terminal</h2>
+
+<p>First off, you need a good terminal emulator that can handle 256 colours. Try <code class="highlighter-rouge">echo $TERM</code>. If it returns <code class="highlighter-rouge">xterm-256color</code> you’re good. You can use a script <a href="https://raw.githubusercontent.com/mbadolato/iTerm2-Color-Schemes/2e5e8e7628ddb09bd2f9408a85e317d25ba7b282/tools/screenshotTable.sh">like this</a> to get an overview of the kinds of colours that are in your current theme.</p>
+
+<h3 id="but-i-dont-get-xterm-256color">But I don’t get <code class="highlighter-rouge">xterm-256color</code></h3>
+
+<p>OK. Well, if you’re only linux, you terminal probably supports it, so look up the best way to set it to 256 colours. It might be just in the terminal settings, or the internet may advice you to put <code class="highlighter-rouge">TERM=xterm-256color</code> in a <code class="highlighter-rouge">profile</code> or <code class="highlighter-rouge">rc</code> file.<br />
+If you’re on a mac, Terminal.app is not going to help you with 256 colours. What I did was install <a href="https://iterm2.com/">iTerm2</a>, which I’m happy with.</p>
+
+<h2 id="colour-scheme">Colour scheme</h2>
+
+<p>Since we’re talking colours anyway, let’s see about that colour scheme. I use the colour scheme <a href="https://github.com/Mayccoll/Gogh/blob/master/content/themes.md#aci">aci from Gogh</a>. I installed the colours manually rather than downloading the script. I suspect it only works on linux anyway. For mac users that decided on iTerm2, I exported the aci colour scheme after setting it up, so you can download it <a href="/other/compsci/2016/07/23/pretty-terminal/gogh-aci.itermcolors">here</a>.</p>
+
+<h2 id="shell">Shell</h2>
+
+<p>The theme that I use is a theme for zsh. So instead of the standard bash shell, you’ll need to run zsh. Now zsh can be customised a lot with plugins and you’ll probably want to use a system that handles those plugins for you. I use <a href="http://ohmyz.sh/">oh-my-zsh</a>, but there are at least two other popular systems.</p>
+
+<h2 id="theme">Theme</h2>
+
+<p>The theme is called <a href="https://github.com/bhilburn/powerlevel9k">powerlevel9k</a> and it’s based on (ideas/symbols from) a Vim plugin called powerline. I use the standard configuration of the theme, but you can completely customise the information that the theme shows you. Do note that you need a special font to show the symbols in the terminal!</p>
+
+<p>To make sure powerlevel9k doesn’t show redundant information, set <code class="highlighter-rouge">DEFAULT_USER="&lt;your-username-here&gt;"</code> in <code class="highlighter-rouge">~/.zshrc</code>. You can <code class="highlighter-rouge">echo $USER</code> to get your current username.</p>
+
+<h2 id="font">Font</h2>
+
+<p>I use the font Source Code Pro in my terminal. The theme does require special symbols, but on linux you can just install the powerline fonts via your package manager. On mac the easiest option is to install the <a href="https://github.com/powerline/fonts">patched font</a> (font + relevant symbols) that you want to use in your terminal.</p>
+
+<h1 id="tldr">Tl;dr</h1>
+
+<h2 id="linux">Linux</h2>
+
+<ol>
+  <li>
+    <p>Install oh-my-zsh:</p>
+
+    <div class="language-sh highlighter-rouge"><pre class="highlight"><code>sh -c <span class="s2">"</span><span class="k">$(</span>wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -<span class="k">)</span><span class="s2">"</span>
+</code></pre>
+    </div>
+
+    <p>If you added you own stuff to <code class="highlighter-rouge">~/.bashrc</code> or <code class="highlighter-rouge">~/.bash_profile</code> now is the time to copy that to <code class="highlighter-rouge">~/.zshrc</code>.</p>
+  </li>
+  <li>
+    <p>To set <code class="highlighter-rouge">zsh</code> as the default shell everywhere:</p>
+
+    <div class="language-zsh highlighter-rouge"><pre class="highlight"><code>chsh -s /bin/zsh
+</code></pre>
+    </div>
+  </li>
+  <li>
+    <p>Install font(s) using your package manager. Search/install the powerline font or patched powerline fonts. Or:</p>
+
+    <div class="language-zsh highlighter-rouge"><pre class="highlight"><code>git clone https://github.com/powerline/fonts.git ~/powerline-fonts
+<span class="nb">cd</span> ~/powerline-fonts <span class="o">&amp;&amp;</span> ./install.sh <span class="o">&amp;&amp;</span> <span class="nb">cd</span> - <span class="o">&amp;&amp;</span> rm -r ~/powerline-fonts
+</code></pre>
+    </div>
+
+    <p>Set the font in your terminal settings. I use Source Code Pro for Powerline.</p>
+  </li>
+  <li>
+    <p>Powerlevel9k theme:</p>
+
+    <div class="language-zsh highlighter-rouge"><pre class="highlight"><code>git clone https://github.com/bhilburn/powerlevel9k.git ~/.oh-my-zsh/custom/themes/powerlevel9k
+sed -i <span class="s1">'s:ZSH_THEME="robbyrussell":ZSH_THEME="powerlevel9k/powerlevel9k":'</span> ~/.zshrc
+</code></pre>
+    </div>
+  </li>
+  <li>
+    <p>Set <code class="highlighter-rouge">xterm-256color</code> and default user (so powerlevel9k doesn’t show redundant info):</p>
+
+    <div class="language-zsh highlighter-rouge"><pre class="highlight"><code><span class="nb">echo</span> <span class="s2">"# First thing to change is the TERM variable
+if [[ -e /usr/share/terminfo/x/xterm-256color ]]; then
+    export TERM=xterm-256color
+fi
+   
+DEFAULT_USER='</span><span class="nv">$USER</span><span class="s2">'
+"</span> | cat - ~/.zshrc &gt; /tmp/out <span class="o">&amp;&amp;</span> mv /tmp/out ~/.zshrc
+</code></pre>
+    </div>
+  </li>
+  <li>
+    <p>Gogh aci colours:</p>
+
+    <div class="language-zsh highlighter-rouge"><pre class="highlight"><code>wget -O xt  http://git.io/v3Dlm <span class="o">&amp;&amp;</span> chmod +x xt <span class="o">&amp;&amp;</span> ./xt <span class="o">&amp;&amp;</span> rm xt
+</code></pre>
+    </div>
+  </li>
+</ol>
+
+<h2 id="mac">Mac</h2>
+
+<ol>
+  <li>
+    <p>Install <a href="https://iterm2.com/">iTerm2</a>:</p>
+
+    <div class="language-sh highlighter-rouge"><pre class="highlight"><code>brew cask install iterm2
+open iterm2
+</code></pre>
+    </div>
+
+    <p>If iterm2 wants to update, do that, currently <code class="highlighter-rouge">brew</code> has version 2.3 whereas version 3 is already out.</p>
+
+    <p>(or just do the graphical download/install)</p>
+  </li>
+  <li>
+    <p><a href="/other/compsci/2016/07/23/pretty-terminal/gogh-aci.itermcolors">Download this</a>, type <kbd>command</kbd>+<kbd>i</kbd> (<kbd>⌘</kbd>+<kbd>i</kbd>), navigate to Colors tab, click on Load Presets, click on Import, select the downloaded file. Now click Load Presets again and select <code class="highlighter-rouge">gogh-aci</code>.</p>
+  </li>
+  <li>
+    <p>Install fonts:</p>
+
+    <div class="language-zsh highlighter-rouge"><pre class="highlight"><code>git clone https://github.com/powerline/fonts.git ~/powerline-fonts
+<span class="nb">cd</span> ~/powerline-fonts <span class="o">&amp;&amp;</span> ./install.sh <span class="o">&amp;&amp;</span> <span class="nb">cd</span> - <span class="o">&amp;&amp;</span> rm -r ~/powerline-fonts
+</code></pre>
+    </div>
+
+    <p>Set the font in your terminal with <kbd>command</kbd>+<kbd>i</kbd> (<kbd>⌘</kbd>+<kbd>i</kbd>), select font, pick a font that ends with “for Powerline”. I use Source Code Pro for Powerline.</p>
+  </li>
+  <li>
+    <p>Install oh-my-zsh:</p>
+
+    <div class="language-sh highlighter-rouge"><pre class="highlight"><code>sh -c <span class="s2">"</span><span class="k">$(</span>curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh<span class="k">)</span><span class="s2">"</span>
+</code></pre>
+    </div>
+
+    <p>If you added you own stuff to <code class="highlighter-rouge">~/.bashrc</code> or <code class="highlighter-rouge">~/.bash_profile</code> now is the time to copy that to <code class="highlighter-rouge">~/.zshrc</code>.</p>
+  </li>
+  <li>
+    <p>Powerlevel9k theme:</p>
+
+    <div class="language-zsh highlighter-rouge"><pre class="highlight"><code>git clone https://github.com/bhilburn/powerlevel9k.git ~/.oh-my-zsh/custom/themes/powerlevel9k
+sed -i <span class="s1">'s:ZSH_THEME="robbyrussell":ZSH_THEME="powerlevel9k/powerlevel9k":'</span> ~/.zshrc
+</code></pre>
+    </div>
+  </li>
+  <li>
+    <p>Set default user so powerlevel9k doesn’t show redundant info:</p>
+
+    <div class="language-zsh highlighter-rouge"><pre class="highlight"><code><span class="nb">echo</span> <span class="s2">"DEFAULT_USER='</span><span class="nv">$USER</span><span class="s2">'
+"</span> | cat - ~/.zshrc &gt; /tmp/out <span class="o">&amp;&amp;</span> mv /tmp/out ~/.zshrc
+</code></pre>
+    </div>
+  </li>
+</ol>
+
+<h2 id="windows">Windows</h2>
+
+<p>Sorry, but I don’t develop on windows. I think you can probably reuse most of these instructions if you can get a proper terminal emulator. Or you could switch to a linux or whatever ¯\_(ツ)_/¯</p>
+
+  </article>
+
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Whatever</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li><a href="mailto:jeff.smits@gmail.com">jeff.smits@gmail.com</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/Apanatshka">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+                </svg>
+              </span>
+
+              <span class="username">Apanatshka</span>
+            </a>
+          </li>
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">A web log. Mostly about computer science-y stuff. 
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
