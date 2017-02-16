@@ -6,6 +6,8 @@ category: CompSci
 tags:     [units, physical quantity, Rust, programming, patterns, types]
 ---
 
+*edited on 2017-02-16*
+
 In this post I'd like to shortly discuss an idea I've had a long time ago about type systems and 
 units of measure. The usual pitch about having units in the type system of a programming language 
 starts with a sad story about some space craft crash because different teams used different 
@@ -30,6 +32,10 @@ measure *Fahrenheit* and *Degrees Celsius*.
 What I find interesting is that all the successful systems I read about focus on units of measure.
 The idea I'd like to explain in this post is unlikely to be original but I haven't the heart to look
 up how much there is written about it. Gah, I'm beating around the bush. Let's just dive in.
+
+> **EDIT:** Please note that although I was triggered by a Rust-specific post and I'm using Rust
+> code below, this idea is expressly not based on Rust-specific features. I'm trying to explain it
+> in a way that would work for almost any programming language. 
 
 # The big idea
 
@@ -136,6 +142,12 @@ you want units you probably just want a crate (Rust equivalent of a library) tha
 everything you could possibly need. That takes a bit of time, but if everyone just contributes to 
 the one crate, you should be able to collect everything you need[^precision]. It could be that 
 simple. Unless I'm overlooking something? Eh, whatever ¯\\\_(ツ)\_/¯
+
+> **EDIT**: But what about all the other features in the Rust type system? What about type
+> parameters and traits and macros and, heck, why not even compiler plugins. Well.. that another
+> thing you'll need to figure out on a per language basis. I suggesting keeping a look out for the
+> release of the [uom crate](https://github.com/iliekturtles/uom), which is iteratively improving
+> a units of measure implementation, based on quantities and normalisation actually :)
 
 [^overhead]: Or perhaps the low-level devs mostly care about the memory overhead of the enums? Or maybe even about the branching in the code during calculations? In that case you should go with the normalising approach I guess. 
 [^precision]: I guess there is the issue of control over precision, which languages with first-class units have better since they can (I think) have any type + unit combination. Maybe we can do something with type parameters.. Hmm, something to ponder/try. 
