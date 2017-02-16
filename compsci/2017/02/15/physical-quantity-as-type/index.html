@@ -64,7 +64,9 @@
   </header>
 
   <article class="post-content">
-    <p>In this post I’d like to shortly discuss an idea I’ve had a long time ago about type systems and 
+    <p><em>edited on 2017-02-16</em></p>
+
+<p>In this post I’d like to shortly discuss an idea I’ve had a long time ago about type systems and 
 units of measure. The usual pitch about having units in the type system of a programming language 
 starts with a sad story about some space craft crash because different teams used different 
 measures of distance. The competing systems are usually 
@@ -86,6 +88,12 @@ measure <em>Fahrenheit</em> and <em>Degrees Celsius</em>.</p>
 <p>What I find interesting is that all the successful systems I read about focus on units of measure.
 The idea I’d like to explain in this post is unlikely to be original but I haven’t the heart to look
 up how much there is written about it. Gah, I’m beating around the bush. Let’s just dive in.</p>
+
+<blockquote>
+  <p><strong>EDIT:</strong> Please note that although I was triggered by a Rust-specific post and I’m using Rust
+code below, this idea is expressly not based on Rust-specific features. I’m trying to explain it
+in a way that would work for almost any programming language.</p>
+</blockquote>
 
 <h1 id="the-big-idea">The big idea</h1>
 
@@ -191,19 +199,27 @@ everything you could possibly need. That takes a bit of time, but if everyone ju
 the one crate, you should be able to collect everything you need<sup id="fnref:precision"><a href="#fn:precision" class="footnote">4</a></sup>. It could be that 
 simple. Unless I’m overlooking something? Eh, whatever ¯\_(ツ)_/¯</p>
 
+<blockquote>
+  <p><strong>EDIT</strong>: But what about all the other features in the Rust type system? What about type
+parameters and traits and macros and, heck, why not even compiler plugins. Well.. that another
+thing you’ll need to figure out on a per language basis. I suggesting keeping a look out for the
+release of the <a href="https://github.com/iliekturtles/uom">uom crate</a>, which is iteratively improving
+a units of measure implementation, based on quantities and normalisation actually :)</p>
+</blockquote>
+
 <div class="footnotes">
   <ol>
     <li id="fn:arithmetic">
-      <p>Addition anyway, I suppose multiplication should always work but just give you a different unit in return. <a href="#fnref:arithmetic" class="reversefootnote">&#8617;</a></p>
+      <p>Addition anyway, I suppose multiplication should always work but just give you a different unit in return.&nbsp;<a href="#fnref:arithmetic" class="reversefootnote">&#8617;</a></p>
     </li>
     <li id="fn:normalisation-problems">
-      <p>Like when you’re measuring star distances in light-years but the Distance quantity is normalised to meters. And there are other issues with rounding errors. For most systems you can probably use a sufficiently large floating point value though, like, I don’t know, a <a href="https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format">128-bit floating point</a>? <a href="#fnref:normalisation-problems" class="reversefootnote">&#8617;</a> <a href="#fnref:normalisation-problems:1" class="reversefootnote">&#8617;<sup>2</sup></a></p>
+      <p>Like when you’re measuring star distances in light-years but the Distance quantity is normalised to meters. And there are other issues with rounding errors. For most systems you can probably use a sufficiently large floating point value though, like, I don’t know, a <a href="https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format">128-bit floating point</a>?&nbsp;<a href="#fnref:normalisation-problems" class="reversefootnote">&#8617;</a>&nbsp;<a href="#fnref:normalisation-problems:1" class="reversefootnote">&#8617;<sup>2</sup></a></p>
     </li>
     <li id="fn:overhead">
-      <p>Or perhaps the low-level devs mostly care about the memory overhead of the enums? Or maybe even about the branching in the code during calculations? In that case you should go with the normalising approach I guess. <a href="#fnref:overhead" class="reversefootnote">&#8617;</a></p>
+      <p>Or perhaps the low-level devs mostly care about the memory overhead of the enums? Or maybe even about the branching in the code during calculations? In that case you should go with the normalising approach I guess.&nbsp;<a href="#fnref:overhead" class="reversefootnote">&#8617;</a></p>
     </li>
     <li id="fn:precision">
-      <p>I guess there is the issue of control over precision, which languages with first-class units have better since they can (I think) have any type + unit combination. Maybe we can do something with type parameters.. Hmm, something to ponder/try. <a href="#fnref:precision" class="reversefootnote">&#8617;</a></p>
+      <p>I guess there is the issue of control over precision, which languages with first-class units have better since they can (I think) have any type + unit combination. Maybe we can do something with type parameters.. Hmm, something to ponder/try.&nbsp;<a href="#fnref:precision" class="reversefootnote">&#8617;</a></p>
     </li>
   </ol>
 </div>

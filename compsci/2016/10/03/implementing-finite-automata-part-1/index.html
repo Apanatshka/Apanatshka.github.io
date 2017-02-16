@@ -129,7 +129,7 @@
 
 <p>We’re not focussing on performance here, but obviously building these sets in the inner loop is kind of terrible. Let’s fix that, by turning the NFA into a DFA, a <em>Deterministic</em> Finite Automaton. Basically we’ll need to pre-compute the sets of states you can be in and make those single states in the DFA. This mean we have an potential combinatorial explosion of states on our hands, which could make things worse.. Eh ¯\_(ツ)_/¯</p>
 
-<h1 id="powerset-construction-nfa-rarr-dfa">Powerset Construction (NFA → DFA)</h1>
+<h1 id="powerset-construction-nfa--dfa">Powerset Construction (NFA → DFA)</h1>
 
 <p>The standard algorithm for NFA to DFA transformation is powerset construction. It’s named after the state-space of the resulting DFA, which is the powerset of the states of the NFA. The <code class="highlighter-rouge">DFA</code> struct and <code class="highlighter-rouge">DFAHashState</code> are very similar to the <code class="highlighter-rouge">NFA</code> one, so I’m not going to show them here to save a bit of space. Basically the only difference is that the <code class="highlighter-rouge">DFAHashState</code> transitions don’t map to a <code class="highlighter-rouge">HashSet</code> but to a single <code class="highlighter-rouge">StateRef</code>. Ah, and here we see that we could make the <code class="highlighter-rouge">NFA</code> struct a more general struct that is generic over the <code class="highlighter-rouge">states</code> so we can reuse it for the <code class="highlighter-rouge">DFA</code>. Note to self: fix that up.</p>
 
@@ -396,10 +396,10 @@ Now that we’ve discovered a new state we didn’t know about before, we’ll a
 <div class="footnotes">
   <ol>
     <li id="fn:1">
-      <p>I mean sure, it’s not hard to write a <code class="highlighter-rouge">vec!</code>-like macro for <code class="highlighter-rouge">HashSet</code>, but it’s not super easy to reuse in multiple projects. And I’m not volunteering to create and maintain a std-lib-extra-utilities crate. Or.. huh, maybe that’s not a bad idea. Though it might just be better to contribute it to the std library… <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+      <p>I mean sure, it’s not hard to write a <code class="highlighter-rouge">vec!</code>-like macro for <code class="highlighter-rouge">HashSet</code>, but it’s not super easy to reuse in multiple projects. And I’m not volunteering to create and maintain a std-lib-extra-utilities crate. Or.. huh, maybe that’s not a bad idea. Though it might just be better to contribute it to the std library…&nbsp;<a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
     </li>
     <li id="fn:2">
-      <p>If you’re trying something like this with a folding function as parameter, make sure you get the type right. It took me quite a while to figure out how to make <code class="highlighter-rouge">fold</code> not eat my <code class="highlighter-rouge">FnMut</code>. As you can see, I got it working by using a borrow of a <code class="highlighter-rouge">Fn</code> instead (because <code class="highlighter-rouge">FnMut</code> is implemented for that). <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+      <p>If you’re trying something like this with a folding function as parameter, make sure you get the type right. It took me quite a while to figure out how to make <code class="highlighter-rouge">fold</code> not eat my <code class="highlighter-rouge">FnMut</code>. As you can see, I got it working by using a borrow of a <code class="highlighter-rouge">Fn</code> instead (because <code class="highlighter-rouge">FnMut</code> is implemented for that).&nbsp;<a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
     </li>
   </ol>
 </div>

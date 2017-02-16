@@ -742,7 +742,7 @@ q4 -&gt; q5 [label=&quot;0&quot;];
 
 <p>Now suddenly <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>0</mn><mn>0</mn><mn>1</mn><mn>0</mn></mrow><annotation encoding="application/x-tex">0010</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathrm">0</span><span class="mord mathrm">0</span><span class="mord mathrm">1</span><span class="mord mathrm">0</span></span></span></span> is in the combined language, but it wasn’t in either of the originals. So that’s not a proper union operation. To fix this, we’ll use an extension of NFAs.</p>
 
-<h3 id="nfa-span-classkatexspan-classkatex-mathmlmathsemanticsmrowmimimrowannotation-encodingapplicationx-texvarepsilonannotationsemanticsmathspanspan-classkatex-html-aria-hiddentruespan-classstrut-styleheight043056emspanspan-classstrut-bottom-styleheight043056emvertical-align0emspanspan-classbase-textstyle-uncrampedspan-classmord-mathitspanspanspanspan">NFA-<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span></h3>
+<h3 id="nfa-εvarepsilonε">NFA-<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">ε</span></span></span></span></h3>
 
 <p>A simple way to specify the correct union operation is through epsilon transitions. You add a new start state and epsilon transitions to the start states of the automata you want to union:</p>
 
@@ -1175,7 +1175,7 @@ q4 -&gt; q5 [label=&quot;0&quot;];
 
 <p>If you can follow the code and my description of the algorithm, check out the <a href="https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm#/media/File:Tarjan%27s_Algorithm_Animation.gif">gif on wikipedia</a>. Visual explanations ftw.</p>
 
-<h3 id="using-the-sccshttpsgithubcomapanatshkadnfacommitc2463da9bc381a01fb1b09c9f989dcb90c56f50c"><a href="https://github.com/Apanatshka/dnfa/commit/c2463da9bc381a01fb1b09c9f989dcb90c56f50c">Using the SCCs</a></h3>
+<h3 id="using-the-sccs"><a href="https://github.com/Apanatshka/dnfa/commit/c2463da9bc381a01fb1b09c9f989dcb90c56f50c">Using the SCCs</a></h3>
 
 <div class="language-rust highlighter-rouge"><pre class="highlight"><code>    <span class="c">/// Replaces epsilon transitions with equivalent states/transitions</span>
     <span class="c">/// Cycles are replaced by single states</span>
@@ -1201,7 +1201,7 @@ q4 -&gt; q5 [label=&quot;0&quot;];
 
 <p>You may think: Is it really this tiny a function once you have the SCCs? But no, there is a helper function <code class="highlighter-rouge">scc_to_nfa_state</code> that’s a bit larger. It <em>is</em> this <strong>simple</strong> though. We can get not only the SCCs out of Tarjan’s algorithm in the desired reverse topo order, but we can also take the <code class="highlighter-rouge">st_lowlink</code> with. If we use it as a <code class="highlighter-rouge">renumbering</code> of the states, we’ll effectively merge all the epsilon loops with no extra effort! Of course the <code class="highlighter-rouge">scc_to_nfa_state</code> does need to collect all the extra transitions, but you can do that from the new NFA that you’re building because of the reverse topo order. So it’s really just <a href="https://github.com/Apanatshka/dnfa/blob/dfa16ae236fb21f5fdc6062c0496e18242f18c32/src/nfa.rs#L206-L236">30 lines of bookkeeping</a>, being careful to use the renumbered state index iff necessary.</p>
 
-<h2 id="delremoving-the-recursiondel-insare-we-there-yetins"><del>Removing the recursion</del> <ins>Are we there yet?</ins></h2>
+<h2 id="removing-the-recursion-are-we-there-yet"><del>Removing the recursion</del> <ins>Are we there yet?</ins></h2>
 
 <p>Well.. Ok, let’s stop here. I had something more to write about removing the recursion from the depth-first search, but I’ll just link to it and not go into detail. My <a href="https://github.com/Apanatshka/dnfa/commit/d0ed9c2d2931f1fc62007c28bee8768abead3346">first attempt</a> was a bit hairy, but I managed to <a href="https://github.com/Apanatshka/dnfa/commit/cc4b5ad939882a8fa18e50371dbe90ee23f70bf1">refactor it</a> to something that I think is manageable. But it <em>is</em> more code, and not the clear algorithm is was anymore. So not as maintainable, and even though the algorithm will unlikely need any changes if it’s bug-free<sup id="fnref:bug-free"><a href="#fn:bug-free" class="footnote">2</a></sup>, it may still need to be edited if the NFAE data structure changes. In the end I’d rather see the compiler do magic to eliminate recursive function call overhead. If I can do it, and it feels mechanical (it kind of did), then a compiler should be able to do this too right? But it’s definitely non-trivial, so yeah.. Whatever ¯\_(ツ)_/¯</p>
 
@@ -1210,10 +1210,10 @@ q4 -&gt; q5 [label=&quot;0&quot;];
 <div class="footnotes">
   <ol>
     <li id="fn:loop-fusion">
-      <p>I have no idea how much the compiler can currently do in this regard. Nor whether a single loop is even better in this case. <a href="#fnref:loop-fusion" class="reversefootnote">&#8617;</a></p>
+      <p>I have no idea how much the compiler can currently do in this regard. Nor whether a single loop is even better in this case.&nbsp;<a href="#fnref:loop-fusion" class="reversefootnote">&#8617;</a></p>
     </li>
     <li id="fn:bug-free">
-      <p>I’m so sorry, but I didn’t test any of the code in this blog post (or linked to in the post) <em>at all</em> O_O I’m a terrible person, I know. I thought of testing the code, but I was still exploring possible solutions. And I don’t trust unit tests to really cover the whole problem and they can be brittle with this data layout for NFAs. Ideally I’d write property-based test (<a href="https://crates.io/crates/quickcheck">quickcheck</a>), but that really requires extra code to normalise NFAs so structurally same NFAs have a unique representation. And I’d need to understand the problemspace fully to generate good input/output. So I thought of all this and I went “bleh, maybe later”. In retrospect I should have just written a few unit tests… <a href="#fnref:bug-free" class="reversefootnote">&#8617;</a></p>
+      <p>I’m so sorry, but I didn’t test any of the code in this blog post (or linked to in the post) <em>at all</em> O_O I’m a terrible person, I know. I thought of testing the code, but I was still exploring possible solutions. And I don’t trust unit tests to really cover the whole problem and they can be brittle with this data layout for NFAs. Ideally I’d write property-based test (<a href="https://crates.io/crates/quickcheck">quickcheck</a>), but that really requires extra code to normalise NFAs so structurally same NFAs have a unique representation. And I’d need to understand the problemspace fully to generate good input/output. So I thought of all this and I went “bleh, maybe later”. In retrospect I should have just written a few unit tests…&nbsp;<a href="#fnref:bug-free" class="reversefootnote">&#8617;</a></p>
     </li>
   </ol>
 </div>
