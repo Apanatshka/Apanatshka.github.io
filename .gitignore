@@ -5,3 +5,4 @@ _build/
 _includes/
 _bin/
 .bundle/
+Gemfile.lock
