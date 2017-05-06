@@ -13,7 +13,7 @@ I published my first crate to [crates.io](https://crates.io/)! It's called [`ate
 
 # What are ATerms
 
-The <u>A</u>nnotated <u>Term</u> format[^1] originates from the [Centre for Mathematics and Computer Science](https://www.cwi.nl/about) in Amsterdam. It features maximal sharing (subtrees that are the same are only allocated once), a compressed binary format, and a C implementation that does garbage collection. The predecessor was described in publication in 1994 and the publication I referenced above is from 2000. 
+The <u>A</u>nnotated <u>Term</u> format[^1] originates from the [Centre for Mathematics and Computer Science (CWI)](https://www.cwi.nl/about) in Amsterdam. It describes trees and annotations on those trees. The big features are maximal sharing (subtrees that are the same are only allocated once), a compressed binary format, and a C implementation that does garbage collection. The format dates back to around 2000. 
 
 The ATerm format was used by a large set of tools in a number of research groups as an exchange format (and they probably also used the library implementations to provide the internal representation as well). Maximal sharing was super fancy, although recently research was published that this maximal sharing can in many situations be more overhead than optimisation. [^2]
 
@@ -29,7 +29,7 @@ In particular, I'm currently working on an interpreter, written in Rust, that in
 
 # Things I learned
 
-# What happened to the Implementing Finite Automata (Part 3)?
+# What happened to the automata?
 
 Eh, whatever ¯\\\_(ツ)\_/¯
 
