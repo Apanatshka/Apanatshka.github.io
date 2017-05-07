@@ -6,13 +6,141 @@
 </description>
     <link>http://blog.jeffsmits.net/</link>
     <atom:link href="http://blog.jeffsmits.net/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Wed, 15 Feb 2017 22:15:36 +0100</pubDate>
-    <lastBuildDate>Wed, 15 Feb 2017 22:15:36 +0100</lastBuildDate>
-    <generator>Jekyll v3.3.1</generator>
+    <pubDate>Sun, 07 May 2017 18:36:39 +0200</pubDate>
+    <lastBuildDate>Sun, 07 May 2017 18:36:39 +0200</lastBuildDate>
+    <generator>Jekyll v3.4.3</generator>
+    
+      <item>
+        <title>My first published crate: aterm</title>
+        <description>&lt;p&gt;I published my first crate to &lt;a href=&quot;https://crates.io/&quot;&gt;crates.io&lt;/a&gt;! It’s called &lt;a href=&quot;https://crates.io/crates/aterm&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;aterm&lt;/code&gt;&lt;/a&gt;, and it’s a library that implements the &lt;u&gt;A&lt;/u&gt;nnotated &lt;u&gt;Term&lt;/u&gt; format. Currently it can only parse and print the normal textual format, but I’m planning to add the other three formats too at some point. There are also a number of other improvements that I have planned. But I’m going to try to not make this post a brain-dump of meandering thoughts. So here’s what I’d like to discuss:&lt;/p&gt;
+
+&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#what-are-aterms&quot; id=&quot;markdown-toc-what-are-aterms&quot;&gt;What are ATerms&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#why-implement-this&quot; id=&quot;markdown-toc-why-implement-this&quot;&gt;Why implement this&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#the-implementation&quot; id=&quot;markdown-toc-the-implementation&quot;&gt;The implementation&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#highlights--things-i-learned&quot; id=&quot;markdown-toc-highlights--things-i-learned&quot;&gt;Highlights &amp;amp; Things I learned&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#what-happened-to-automata&quot; id=&quot;markdown-toc-what-happened-to-automata&quot;&gt;What happened to automata?&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;what-are-aterms&quot;&gt;What are ATerms&lt;/h1&gt;
+
+&lt;p&gt;The Annotated Term format&lt;sup id=&quot;fnref:1&quot;&gt;&lt;a href=&quot;#fn:1&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; originates from the &lt;a href=&quot;https://www.cwi.nl/about&quot;&gt;Centre for Mathematics and Computer Science (CWI)&lt;/a&gt; in Amsterdam. It describes trees and annotations on those trees. The big features are maximal sharing (subtrees that are the same are only allocated once), a compressed binary format, and a C implementation that does garbage collection. The format dates back to around 2000.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Add(Int(&quot;1&quot;){Value(1)}, Int(&quot;2&quot;){Value(2)}){Value(3)}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;(^A small tree describing addition of two numbers, with annotations on each “application” with the value)&lt;/p&gt;
+
+&lt;p&gt;The ATerm format was used by a number of tools in a number of research groups as an exchange format (and they probably also used the library implementations to provide the internal representation as well). Maximal sharing was super fancy, although recently research was published that this maximal sharing can in many situations be more overhead than optimisation. &lt;sup id=&quot;fnref:2&quot;&gt;&lt;a href=&quot;#fn:2&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt; The compressed formats allowed pretty quick communication between different tools that sometimes explicitly held on to the &lt;a href=&quot;https://en.wikipedia.org/wiki/Unix_philosophy&quot;&gt;Unix philosophy&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;For those of you who are interested in implementations of this format in other languages, have a look at the &lt;a href=&quot;https://github.com/cwi-swat/aterms&quot;&gt;CWI repository&lt;/a&gt;, which includes implementations in C, Java and C#.&lt;/p&gt;
+
+&lt;h1 id=&quot;why-implement-this&quot;&gt;Why implement this&lt;/h1&gt;
+
+&lt;p&gt;As mentioned in the high-level description above, this was used by a number of tools created by researchers as an exchange format. I actually use this format myself at TU Delft. So I figured I could combine my wish to learn more Rust and performance engineering, with some of the knowledge I have about ageing tools I use!&lt;/p&gt;
+
+&lt;p&gt;In particular, I’m currently working on an interpreter, written in Rust, that executes Stratego Core code. &lt;a href=&quot;http://strategoxt.org/&quot;&gt;Stratego&lt;/a&gt; (or Stratego/XT, to disambiguate from the board game) is a language for program transformation. The Stratego compiler can return an intermediate representation called the “core” language, as an AST in the ATerm format. I’m planning to write about this interpreter in another blog post soon.&lt;/p&gt;
+
+&lt;h1 id=&quot;the-implementation&quot;&gt;The implementation&lt;/h1&gt;
+
+&lt;p&gt;Ok, so here’s what you get from the &lt;code class=&quot;highlighter-rouge&quot;&gt;aterm&lt;/code&gt; crate:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;A parser that takes in an text format ATerm string.
+    &lt;ul&gt;
+      &lt;li&gt;I have &lt;a href=&quot;https://gitlab.com/Apanatshka/aterm/issues/10&quot;&gt;a&lt;/a&gt; &lt;a href=&quot;https://gitlab.com/Apanatshka/aterm/issues/4&quot;&gt;number&lt;/a&gt; &lt;a href=&quot;https://gitlab.com/Apanatshka/aterm/issues/5&quot;&gt;of&lt;/a&gt; &lt;a href=&quot;https://gitlab.com/Apanatshka/aterm/issues/6&quot;&gt;issues&lt;/a&gt; open: basically zero-copy parsing and the other formats.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;A printer for the text format. Again, the other formats are todo.&lt;/li&gt;
+  &lt;li&gt;A factory trait for building ATerms.&lt;/li&gt;
+  &lt;li&gt;An ATerm trait for matching ATerms.&lt;/li&gt;
+  &lt;li&gt;Some basics such as the default enum for terms (&lt;code class=&quot;highlighter-rouge&quot;&gt;Int(i32)&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;Real(f32)&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;Application(constructor, children)&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;List(children)&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;Placeholder(placeholder_enum)&lt;/code&gt;).&lt;/li&gt;
+  &lt;li&gt;The &lt;a href=&quot;http://homepages.cwi.nl/~daybuild/daily-books/technology/aterm-guide/aterm-guide.html&quot;&gt;ATerm programming guide&lt;/a&gt; mentions a BLOB term, which I considered an extension point that could be typed in Rust. So you can add more stuff to the term enum with the variant &lt;code class=&quot;highlighter-rouge&quot;&gt;Blob(your_extension_here)&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;An implementation of the ATerm trait for the above basics.&lt;/li&gt;
+  &lt;li&gt;A reference counting implementation with factory.&lt;/li&gt;
+  &lt;li&gt;A second Rc implementation where the factory guarantees maximal sharing.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;For more details, check out the &lt;a href=&quot;https://docs.rs/aterm&quot;&gt;docs&lt;/a&gt;. (Which I should probably extend a little…)&lt;/p&gt;
+
+&lt;h2 id=&quot;highlights--things-i-learned&quot;&gt;Highlights &amp;amp; Things I learned&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Ideally I would have use higher-kinded types for this ATerm implementation. But Rust doesn’t have that. So I found a way where the &lt;code class=&quot;highlighter-rouge&quot;&gt;ATerm&lt;/code&gt; trait defines an associated type &lt;code class=&quot;highlighter-rouge&quot;&gt;Rec: Borrow&amp;lt;Self&amp;gt;&lt;/code&gt;. That still allows people to implement the &lt;code class=&quot;highlighter-rouge&quot;&gt;ATerm&lt;/code&gt; trait while adding in more of their own things. The basic &lt;code class=&quot;highlighter-rouge&quot;&gt;rc::ATerm&lt;/code&gt; implementation looks like this:
+    &lt;div class=&quot;language-rust highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ATerm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ATermInner&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;Rc&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ATerm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+    &lt;/div&gt;
+    &lt;p&gt;Where &lt;code class=&quot;highlighter-rouge&quot;&gt;ATermInner&lt;/code&gt; is a basic implementation that contains a term and a list of annotations.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Using your own library is the only way to make sure it’s actually usable! I had this implementation that compiled a while back, then I started using the factory for the parser, and nothing actually worked out. Then I started to think things over, removed a bunch type parameters, generally simplified things. I’m now a bit unhappy with the allocation characteristics, but the crate isn’t 1.0 yet, I can still tinker with it a little although I don’t want to introduce big breaking changes anymore.&lt;/li&gt;
+  &lt;li&gt;I had an arena allocation implementation at some point. It was terribly broken, so I had to cut it out. I plan on &lt;a href=&quot;https://gitlab.com/Apanatshka/aterm/issues/9&quot;&gt;revisiting that idea soon&lt;/a&gt; by using someone else’s arena allocation crate.&lt;/li&gt;
+  &lt;li&gt;While simplifying and trying to get my library usable, I found out a thing I hadn’t really grasped before in the Rust type system: &lt;em&gt;Associated types are unique per trait implementation&lt;/em&gt;. So for my &lt;code class=&quot;highlighter-rouge&quot;&gt;ATerm&lt;/code&gt; trait I made the &lt;code class=&quot;highlighter-rouge&quot;&gt;Rec&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;Blob&lt;/code&gt; types associative, and that made it much more usable. You see, associated types are easier on Rust’s type inference: Given a fully concrete type there definitely only one trait implementation possible. And it’s not as limiting for the implementor as you might think. You can still use type parameters in your &lt;code class=&quot;highlighter-rouge&quot;&gt;impl&lt;/code&gt;s:
+    &lt;div class=&quot;language-rust highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;impl&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ATerm&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ATermInner&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Rec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Borrow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ATermInner&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Rec&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Rec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Blob&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;cp&quot;&gt;#[inline]&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;into_inner&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ATermInner&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;cp&quot;&gt;#[inline]&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;as_inner&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ATermInner&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;Self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Blob&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+    &lt;/div&gt;
+    &lt;p&gt;The only thing I dislike about associated types is how large your where clauses get when you want to add extra constraints. While working on my Stratego interpreter, at some point I had where clauses like this:&lt;/p&gt;
+    &lt;div class=&quot;language-rust highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ATermFactory&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ATermRef&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;A&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Borrow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;F&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ATermFactory&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ATerm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Clone&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;F&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ATermFactory&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ATerm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Eq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+    &lt;/div&gt;
+    &lt;p&gt;I was already using type parameter &lt;code class=&quot;highlighter-rouge&quot;&gt;A&lt;/code&gt; so I didn’t have to use &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;lt;F as ATermFactory&amp;lt;'a, B&amp;gt;&amp;gt;::ATermRef&lt;/code&gt;. I found a slight improvement when I defined type aliases for &lt;code class=&quot;highlighter-rouge&quot;&gt;ATermRef&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;ATerm&lt;/code&gt; from a factory. Later I just defined the concrete types I was using with some type aliases (for easy changing later) and went with that. Makes it slightly harder to change them later if I start to depend on concrete parts of the types, but most code was already written in a generic way, so it shouldn’t be too much of a pain. It’s kind of sad that writing generic code is so ugly and sometimes impossible, I like writing code where I only require a minimal contract on what the types need to be capable of.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&quot;what-happened-to-automata&quot;&gt;What happened to automata?&lt;/h1&gt;
+
+&lt;p&gt;I wrote my last automata blog post in November last year. Since then I’ve been really busy. In the short amounts of spare time I had left, at first I tried to do the benchmarking for the third Finite Automata post. But I couldn’t figure out how to do it right, or maybe it was all in reading the trace output. Basically I’m not that familiar with performance measurement tools yet, and I was mostly  stumped by &lt;em&gt;why&lt;/em&gt; my implementation was so much slower than the one I was comparing with (I wasn’t surprised &lt;em&gt;that&lt;/em&gt; it was slower, I was comparing to &lt;a href=&quot;https://crates.io/crates/aho-corasick&quot;&gt;BurntSushi’s &lt;code class=&quot;highlighter-rouge&quot;&gt;aho-corasick&lt;/code&gt;&lt;/a&gt;, good luck beating his stuff ^^). Since I only had an hour here or there, I couldn’t effectively work on it, so I gave up for a while. When I got a bit of time again, I needed something new and exciting, not something to bash my head against. So that’s why you got ATerms, and soon a post on my Stratego interpreter. I’ll get back to automata afterwards. I think I can also do some performance engineering on the interpreter, so maybe I’ll learn more that way and use that knowledge to finish writing about the Finite Automata. Until then, I hope you can be patient. Or just say: Eh, whatever ¯\_(ツ)_/¯&lt;/p&gt;
+
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:1&quot;&gt;
+      &lt;p&gt;van den Brand, M. G., De Jong, H. A., Klint, P., &amp;amp; Olivier, P. A. (2000). Efficient annotated terms. &lt;em&gt;Software Practice and Experience&lt;/em&gt;, 30(3), 259-291.&amp;nbsp;&lt;a href=&quot;#fnref:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:2&quot;&gt;
+      &lt;p&gt;Steindorfer, M. J., &amp;amp; Vinju, J. J. (2016, March). Performance Modeling of Maximal Sharing. In &lt;em&gt;Proceedings&lt;/em&gt; of the 7th ACM/SPEC on &lt;em&gt;International Conference on Performance Engineering&lt;/em&gt; (pp. 135-146). ACM.&amp;nbsp;&lt;a href=&quot;#fnref:2&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Sun, 07 May 2017 00:00:00 +0200</pubDate>
+        <link>http://blog.jeffsmits.net/compsci/2017/05/07/first-published-crate-aterm/</link>
+        <guid isPermaLink="true">http://blog.jeffsmits.net/compsci/2017/05/07/first-published-crate-aterm/</guid>
+        
+        <category>annotated term</category>
+        
+        <category>term</category>
+        
+        <category>Rust</category>
+        
+        
+        <category>CompSci</category>
+        
+      </item>
     
       <item>
         <title>Types, units and quantities</title>
-        <description>&lt;p&gt;In this post I’d like to shortly discuss an idea I’ve had a long time ago about type systems and 
+        <description>&lt;p&gt;&lt;em&gt;edited on 2017-02-16&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;In this post I’d like to shortly discuss an idea I’ve had a long time ago about type systems and 
 units of measure. The usual pitch about having units in the type system of a programming language 
 starts with a sad story about some space craft crash because different teams used different 
 measures of distance. The competing systems are usually 
@@ -34,6 +162,12 @@ measure &lt;em&gt;Fahrenheit&lt;/em&gt; and &lt;em&gt;Degrees Celsius&lt;/em&gt;
 &lt;p&gt;What I find interesting is that all the successful systems I read about focus on units of measure.
 The idea I’d like to explain in this post is unlikely to be original but I haven’t the heart to look
 up how much there is written about it. Gah, I’m beating around the bush. Let’s just dive in.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;strong&gt;EDIT:&lt;/strong&gt; Please note that although I was triggered by a Rust-specific post and I’m using Rust
+code below, this idea is expressly not based on Rust-specific features. I’m trying to explain it
+in a way that would work for almost any programming language.&lt;/p&gt;
+&lt;/blockquote&gt;
 
 &lt;h1 id=&quot;the-big-idea&quot;&gt;The big idea&lt;/h1&gt;
 
@@ -139,19 +273,27 @@ everything you could possibly need. That takes a bit of time, but if everyone ju
 the one crate, you should be able to collect everything you need&lt;sup id=&quot;fnref:precision&quot;&gt;&lt;a href=&quot;#fn:precision&quot; class=&quot;footnote&quot;&gt;4&lt;/a&gt;&lt;/sup&gt;. It could be that 
 simple. Unless I’m overlooking something? Eh, whatever ¯\_(ツ)_/¯&lt;/p&gt;
 
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;strong&gt;EDIT&lt;/strong&gt;: But what about all the other features in the Rust type system? What about type
+parameters and traits and macros and, heck, why not even compiler plugins. Well.. that another
+thing you’ll need to figure out on a per language basis. I suggesting keeping a look out for the
+release of the &lt;a href=&quot;https://github.com/iliekturtles/uom&quot;&gt;uom crate&lt;/a&gt;, which is iteratively improving
+a units of measure implementation, based on quantities and normalisation actually :)&lt;/p&gt;
+&lt;/blockquote&gt;
+
 &lt;div class=&quot;footnotes&quot;&gt;
   &lt;ol&gt;
     &lt;li id=&quot;fn:arithmetic&quot;&gt;
-      &lt;p&gt;Addition anyway, I suppose multiplication should always work but just give you a different unit in return. &lt;a href=&quot;#fnref:arithmetic&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;Addition anyway, I suppose multiplication should always work but just give you a different unit in return.&amp;nbsp;&lt;a href=&quot;#fnref:arithmetic&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
     &lt;li id=&quot;fn:normalisation-problems&quot;&gt;
-      &lt;p&gt;Like when you’re measuring star distances in light-years but the Distance quantity is normalised to meters. And there are other issues with rounding errors. For most systems you can probably use a sufficiently large floating point value though, like, I don’t know, a &lt;a href=&quot;https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format&quot;&gt;128-bit floating point&lt;/a&gt;? &lt;a href=&quot;#fnref:normalisation-problems&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt; &lt;a href=&quot;#fnref:normalisation-problems:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;Like when you’re measuring star distances in light-years but the Distance quantity is normalised to meters. And there are other issues with rounding errors. For most systems you can probably use a sufficiently large floating point value though, like, I don’t know, a &lt;a href=&quot;https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format&quot;&gt;128-bit floating point&lt;/a&gt;?&amp;nbsp;&lt;a href=&quot;#fnref:normalisation-problems&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&amp;nbsp;&lt;a href=&quot;#fnref:normalisation-problems:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
     &lt;li id=&quot;fn:overhead&quot;&gt;
-      &lt;p&gt;Or perhaps the low-level devs mostly care about the memory overhead of the enums? Or maybe even about the branching in the code during calculations? In that case you should go with the normalising approach I guess. &lt;a href=&quot;#fnref:overhead&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;Or perhaps the low-level devs mostly care about the memory overhead of the enums? Or maybe even about the branching in the code during calculations? In that case you should go with the normalising approach I guess.&amp;nbsp;&lt;a href=&quot;#fnref:overhead&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
     &lt;li id=&quot;fn:precision&quot;&gt;
-      &lt;p&gt;I guess there is the issue of control over precision, which languages with first-class units have better since they can (I think) have any type + unit combination. Maybe we can do something with type parameters.. Hmm, something to ponder/try. &lt;a href=&quot;#fnref:precision&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;I guess there is the issue of control over precision, which languages with first-class units have better since they can (I think) have any type + unit combination. Maybe we can do something with type parameters.. Hmm, something to ponder/try.&amp;nbsp;&lt;a href=&quot;#fnref:precision&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
 &lt;/div&gt;
@@ -197,10 +339,10 @@ other than the original intended use-case of networks&lt;sup id=&quot;fnref:net-
 &lt;div class=&quot;footnotes&quot;&gt;
   &lt;ol&gt;
     &lt;li id=&quot;fn:health&quot;&gt;
-      &lt;p&gt;Hopefully, if health allows, stupid cold virus &amp;gt;:( &lt;a href=&quot;#fnref:health&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;Hopefully, if health allows, stupid cold virus &amp;gt;:(&amp;nbsp;&lt;a href=&quot;#fnref:health&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
     &lt;li id=&quot;fn:net-domain&quot;&gt;
-      &lt;p&gt;Like personal domains which don’t have a super weird/cheesy/hipster TLD &lt;a href=&quot;#fnref:net-domain&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;Like personal domains which don’t have a super weird/cheesy/hipster TLD&amp;nbsp;&lt;a href=&quot;#fnref:net-domain&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
 &lt;/div&gt;
@@ -898,7 +1040,7 @@ q4 -&amp;gt; q5 [label=&amp;quot;0&amp;quot;];
 
 &lt;p&gt;Now suddenly &lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;mn&gt;1&lt;/mn&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;0010&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.64444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.64444em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;mord mathrm&quot;&gt;0&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; is in the combined language, but it wasn’t in either of the originals. So that’s not a proper union operation. To fix this, we’ll use an extension of NFAs.&lt;/p&gt;
 
-&lt;h3 id=&quot;nfa-span-classkatexspan-classkatex-mathmlmathsemanticsmrowmimimrowannotation-encodingapplicationx-texvarepsilonannotationsemanticsmathspanspan-classkatex-html-aria-hiddentruespan-classstrut-styleheight043056emspanspan-classstrut-bottom-styleheight043056emvertical-align0emspanspan-classbase-textstyle-uncrampedspan-classmord-mathitspanspanspanspan&quot;&gt;NFA-&lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/h3&gt;
+&lt;h3 id=&quot;nfa-εvarepsilonε&quot;&gt;NFA-&lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;ε&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;\varepsilon&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.43056em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;strut bottom&quot; style=&quot;height:0.43056em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;base textstyle uncramped&quot;&gt;&lt;span class=&quot;mord mathit&quot;&gt;ε&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/h3&gt;
 
 &lt;p&gt;A simple way to specify the correct union operation is through epsilon transitions. You add a new start state and epsilon transitions to the start states of the automata you want to union:&lt;/p&gt;
 
@@ -1331,7 +1473,7 @@ q4 -&amp;gt; q5 [label=&amp;quot;0&amp;quot;];
 
 &lt;p&gt;If you can follow the code and my description of the algorithm, check out the &lt;a href=&quot;https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm#/media/File:Tarjan%27s_Algorithm_Animation.gif&quot;&gt;gif on wikipedia&lt;/a&gt;. Visual explanations ftw.&lt;/p&gt;
 
-&lt;h3 id=&quot;using-the-sccshttpsgithubcomapanatshkadnfacommitc2463da9bc381a01fb1b09c9f989dcb90c56f50c&quot;&gt;&lt;a href=&quot;https://github.com/Apanatshka/dnfa/commit/c2463da9bc381a01fb1b09c9f989dcb90c56f50c&quot;&gt;Using the SCCs&lt;/a&gt;&lt;/h3&gt;
+&lt;h3 id=&quot;using-the-sccs&quot;&gt;&lt;a href=&quot;https://github.com/Apanatshka/dnfa/commit/c2463da9bc381a01fb1b09c9f989dcb90c56f50c&quot;&gt;Using the SCCs&lt;/a&gt;&lt;/h3&gt;
 
 &lt;div class=&quot;language-rust highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    &lt;span class=&quot;c&quot;&gt;/// Replaces epsilon transitions with equivalent states/transitions&lt;/span&gt;
     &lt;span class=&quot;c&quot;&gt;/// Cycles are replaced by single states&lt;/span&gt;
@@ -1357,7 +1499,7 @@ q4 -&amp;gt; q5 [label=&amp;quot;0&amp;quot;];
 
 &lt;p&gt;You may think: Is it really this tiny a function once you have the SCCs? But no, there is a helper function &lt;code class=&quot;highlighter-rouge&quot;&gt;scc_to_nfa_state&lt;/code&gt; that’s a bit larger. It &lt;em&gt;is&lt;/em&gt; this &lt;strong&gt;simple&lt;/strong&gt; though. We can get not only the SCCs out of Tarjan’s algorithm in the desired reverse topo order, but we can also take the &lt;code class=&quot;highlighter-rouge&quot;&gt;st_lowlink&lt;/code&gt; with. If we use it as a &lt;code class=&quot;highlighter-rouge&quot;&gt;renumbering&lt;/code&gt; of the states, we’ll effectively merge all the epsilon loops with no extra effort! Of course the &lt;code class=&quot;highlighter-rouge&quot;&gt;scc_to_nfa_state&lt;/code&gt; does need to collect all the extra transitions, but you can do that from the new NFA that you’re building because of the reverse topo order. So it’s really just &lt;a href=&quot;https://github.com/Apanatshka/dnfa/blob/dfa16ae236fb21f5fdc6062c0496e18242f18c32/src/nfa.rs#L206-L236&quot;&gt;30 lines of bookkeeping&lt;/a&gt;, being careful to use the renumbered state index iff necessary.&lt;/p&gt;
 
-&lt;h2 id=&quot;delremoving-the-recursiondel-insare-we-there-yetins&quot;&gt;&lt;del&gt;Removing the recursion&lt;/del&gt; &lt;ins&gt;Are we there yet?&lt;/ins&gt;&lt;/h2&gt;
+&lt;h2 id=&quot;removing-the-recursion-are-we-there-yet&quot;&gt;&lt;del&gt;Removing the recursion&lt;/del&gt; &lt;ins&gt;Are we there yet?&lt;/ins&gt;&lt;/h2&gt;
 
 &lt;p&gt;Well.. Ok, let’s stop here. I had something more to write about removing the recursion from the depth-first search, but I’ll just link to it and not go into detail. My &lt;a href=&quot;https://github.com/Apanatshka/dnfa/commit/d0ed9c2d2931f1fc62007c28bee8768abead3346&quot;&gt;first attempt&lt;/a&gt; was a bit hairy, but I managed to &lt;a href=&quot;https://github.com/Apanatshka/dnfa/commit/cc4b5ad939882a8fa18e50371dbe90ee23f70bf1&quot;&gt;refactor it&lt;/a&gt; to something that I think is manageable. But it &lt;em&gt;is&lt;/em&gt; more code, and not the clear algorithm is was anymore. So not as maintainable, and even though the algorithm will unlikely need any changes if it’s bug-free&lt;sup id=&quot;fnref:bug-free&quot;&gt;&lt;a href=&quot;#fn:bug-free&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;, it may still need to be edited if the NFAE data structure changes. In the end I’d rather see the compiler do magic to eliminate recursive function call overhead. If I can do it, and it feels mechanical (it kind of did), then a compiler should be able to do this too right? But it’s definitely non-trivial, so yeah.. Whatever ¯\_(ツ)_/¯&lt;/p&gt;
 
@@ -1366,10 +1508,10 @@ q4 -&amp;gt; q5 [label=&amp;quot;0&amp;quot;];
 &lt;div class=&quot;footnotes&quot;&gt;
   &lt;ol&gt;
     &lt;li id=&quot;fn:loop-fusion&quot;&gt;
-      &lt;p&gt;I have no idea how much the compiler can currently do in this regard. Nor whether a single loop is even better in this case. &lt;a href=&quot;#fnref:loop-fusion&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;I have no idea how much the compiler can currently do in this regard. Nor whether a single loop is even better in this case.&amp;nbsp;&lt;a href=&quot;#fnref:loop-fusion&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
     &lt;li id=&quot;fn:bug-free&quot;&gt;
-      &lt;p&gt;I’m so sorry, but I didn’t test any of the code in this blog post (or linked to in the post) &lt;em&gt;at all&lt;/em&gt; O_O I’m a terrible person, I know. I thought of testing the code, but I was still exploring possible solutions. And I don’t trust unit tests to really cover the whole problem and they can be brittle with this data layout for NFAs. Ideally I’d write property-based test (&lt;a href=&quot;https://crates.io/crates/quickcheck&quot;&gt;quickcheck&lt;/a&gt;), but that really requires extra code to normalise NFAs so structurally same NFAs have a unique representation. And I’d need to understand the problemspace fully to generate good input/output. So I thought of all this and I went “bleh, maybe later”. In retrospect I should have just written a few unit tests… &lt;a href=&quot;#fnref:bug-free&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;I’m so sorry, but I didn’t test any of the code in this blog post (or linked to in the post) &lt;em&gt;at all&lt;/em&gt; O_O I’m a terrible person, I know. I thought of testing the code, but I was still exploring possible solutions. And I don’t trust unit tests to really cover the whole problem and they can be brittle with this data layout for NFAs. Ideally I’d write property-based test (&lt;a href=&quot;https://crates.io/crates/quickcheck&quot;&gt;quickcheck&lt;/a&gt;), but that really requires extra code to normalise NFAs so structurally same NFAs have a unique representation. And I’d need to understand the problemspace fully to generate good input/output. So I thought of all this and I went “bleh, maybe later”. In retrospect I should have just written a few unit tests…&amp;nbsp;&lt;a href=&quot;#fnref:bug-free&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
 &lt;/div&gt;
@@ -1468,7 +1610,7 @@ q4 -&amp;gt; q5 [label=&amp;quot;0&amp;quot;];
 
 &lt;p&gt;We’re not focussing on performance here, but obviously building these sets in the inner loop is kind of terrible. Let’s fix that, by turning the NFA into a DFA, a &lt;em&gt;Deterministic&lt;/em&gt; Finite Automaton. Basically we’ll need to pre-compute the sets of states you can be in and make those single states in the DFA. This mean we have an potential combinatorial explosion of states on our hands, which could make things worse.. Eh ¯\_(ツ)_/¯&lt;/p&gt;
 
-&lt;h1 id=&quot;powerset-construction-nfa-rarr-dfa&quot;&gt;Powerset Construction (NFA → DFA)&lt;/h1&gt;
+&lt;h1 id=&quot;powerset-construction-nfa--dfa&quot;&gt;Powerset Construction (NFA → DFA)&lt;/h1&gt;
 
 &lt;p&gt;The standard algorithm for NFA to DFA transformation is powerset construction. It’s named after the state-space of the resulting DFA, which is the powerset of the states of the NFA. The &lt;code class=&quot;highlighter-rouge&quot;&gt;DFA&lt;/code&gt; struct and &lt;code class=&quot;highlighter-rouge&quot;&gt;DFAHashState&lt;/code&gt; are very similar to the &lt;code class=&quot;highlighter-rouge&quot;&gt;NFA&lt;/code&gt; one, so I’m not going to show them here to save a bit of space. Basically the only difference is that the &lt;code class=&quot;highlighter-rouge&quot;&gt;DFAHashState&lt;/code&gt; transitions don’t map to a &lt;code class=&quot;highlighter-rouge&quot;&gt;HashSet&lt;/code&gt; but to a single &lt;code class=&quot;highlighter-rouge&quot;&gt;StateRef&lt;/code&gt;. Ah, and here we see that we could make the &lt;code class=&quot;highlighter-rouge&quot;&gt;NFA&lt;/code&gt; struct a more general struct that is generic over the &lt;code class=&quot;highlighter-rouge&quot;&gt;states&lt;/code&gt; so we can reuse it for the &lt;code class=&quot;highlighter-rouge&quot;&gt;DFA&lt;/code&gt;. Note to self: fix that up.&lt;/p&gt;
 
@@ -1735,10 +1877,10 @@ Now that we’ve discovered a new state we didn’t know about before, we’ll a
 &lt;div class=&quot;footnotes&quot;&gt;
   &lt;ol&gt;
     &lt;li id=&quot;fn:1&quot;&gt;
-      &lt;p&gt;I mean sure, it’s not hard to write a &lt;code class=&quot;highlighter-rouge&quot;&gt;vec!&lt;/code&gt;-like macro for &lt;code class=&quot;highlighter-rouge&quot;&gt;HashSet&lt;/code&gt;, but it’s not super easy to reuse in multiple projects. And I’m not volunteering to create and maintain a std-lib-extra-utilities crate. Or.. huh, maybe that’s not a bad idea. Though it might just be better to contribute it to the std library… &lt;a href=&quot;#fnref:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;I mean sure, it’s not hard to write a &lt;code class=&quot;highlighter-rouge&quot;&gt;vec!&lt;/code&gt;-like macro for &lt;code class=&quot;highlighter-rouge&quot;&gt;HashSet&lt;/code&gt;, but it’s not super easy to reuse in multiple projects. And I’m not volunteering to create and maintain a std-lib-extra-utilities crate. Or.. huh, maybe that’s not a bad idea. Though it might just be better to contribute it to the std library…&amp;nbsp;&lt;a href=&quot;#fnref:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
     &lt;li id=&quot;fn:2&quot;&gt;
-      &lt;p&gt;If you’re trying something like this with a folding function as parameter, make sure you get the type right. It took me quite a while to figure out how to make &lt;code class=&quot;highlighter-rouge&quot;&gt;fold&lt;/code&gt; not eat my &lt;code class=&quot;highlighter-rouge&quot;&gt;FnMut&lt;/code&gt;. As you can see, I got it working by using a borrow of a &lt;code class=&quot;highlighter-rouge&quot;&gt;Fn&lt;/code&gt; instead (because &lt;code class=&quot;highlighter-rouge&quot;&gt;FnMut&lt;/code&gt; is implemented for that). &lt;a href=&quot;#fnref:2&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;If you’re trying something like this with a folding function as parameter, make sure you get the type right. It took me quite a while to figure out how to make &lt;code class=&quot;highlighter-rouge&quot;&gt;fold&lt;/code&gt; not eat my &lt;code class=&quot;highlighter-rouge&quot;&gt;FnMut&lt;/code&gt;. As you can see, I got it working by using a borrow of a &lt;code class=&quot;highlighter-rouge&quot;&gt;Fn&lt;/code&gt; instead (because &lt;code class=&quot;highlighter-rouge&quot;&gt;FnMut&lt;/code&gt; is implemented for that).&amp;nbsp;&lt;a href=&quot;#fnref:2&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
 &lt;/div&gt;
@@ -3359,7 +3501,7 @@ Z1 -- Plus -- Z2 -- Star -- O1;
 &lt;div class=&quot;footnotes&quot;&gt;
   &lt;ol&gt;
     &lt;li id=&quot;fn:1&quot;&gt;
-      &lt;p&gt;Though I can’t guarantee that stuff will be optimal in general with this approach. I guess the approach is pretty vaguely defined anyway. Ehhh.. whatever ¯\_(ツ)_/¯ &lt;a href=&quot;#fnref:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;Though I can’t guarantee that stuff will be optimal in general with this approach. I guess the approach is pretty vaguely defined anyway. Ehhh.. whatever ¯\_(ツ)_/¯&amp;nbsp;&lt;a href=&quot;#fnref:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
 &lt;/div&gt;
