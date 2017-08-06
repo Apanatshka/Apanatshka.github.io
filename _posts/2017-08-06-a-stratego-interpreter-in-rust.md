@@ -10,7 +10,7 @@ At the end of my last post, three months ago by now, I promised a blog post abou
 
 I assume you're already a bit familiar with Rust, most of my blog posts use it. I'm using it for side-projects, one of which is writing a performant Stratego interpreter. By Stratego, in this case, I mean the [programming language](http://strategoxt.org). In this blog post I'll give you a look into the process of building this interpreter and all that I learnt about Rust while doing so. But I'll also go deep into the quirky semantics of Stratego, because it was (usually) fun to figure out! If you like the [Wat](https://www.destroyallsoftware.com/talks/wat) talk, I'm sure you'll enjoy some of this stuff too.
 
-*Note:* I have a couple years of experience with Stratego and spent quite some time on this project, so I suspect some of my explanation here will skip steps that might help you understand better. So I encourage you to send me questions in the [Reddit thread](https://www.reddit.com/r/rust/) where I'll post this. 
+*Note:* I have a couple years of experience with Stratego and spent quite some time on this project, so I suspect some of my explanation here will skip steps that might help you understand better. So I encourage you to send me questions in the [Reddit thread](https://www.reddit.com/r/rust/comments/6ryhrl/building_a_faster_interpreter_for_an_old_language/) where I'll post this. 
 
 * Table of Contents
 {:toc}
