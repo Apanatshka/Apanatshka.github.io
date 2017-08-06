@@ -6,8 +6,8 @@
 </description>
     <link>http://blog.jeffsmits.net/</link>
     <atom:link href="http://blog.jeffsmits.net/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sun, 06 Aug 2017 16:00:09 +0200</pubDate>
-    <lastBuildDate>Sun, 06 Aug 2017 16:00:09 +0200</lastBuildDate>
+    <pubDate>Sun, 06 Aug 2017 16:03:42 +0200</pubDate>
+    <lastBuildDate>Sun, 06 Aug 2017 16:03:42 +0200</lastBuildDate>
     <generator>Jekyll v3.4.5</generator>
     
       <item>
@@ -16,7 +16,7 @@
 
 &lt;p&gt;I assume you’re already a bit familiar with Rust, most of my blog posts use it. I’m using it for side-projects, one of which is writing a performant Stratego interpreter. By Stratego, in this case, I mean the &lt;a href=&quot;http://strategoxt.org&quot;&gt;programming language&lt;/a&gt;. In this blog post I’ll give you a look into the process of building this interpreter and all that I learnt about Rust while doing so. But I’ll also go deep into the quirky semantics of Stratego, because it was (usually) fun to figure out! If you like the &lt;a href=&quot;https://www.destroyallsoftware.com/talks/wat&quot;&gt;Wat&lt;/a&gt; talk, I’m sure you’ll enjoy some of this stuff too.&lt;/p&gt;
 
-&lt;p&gt;&lt;em&gt;Note:&lt;/em&gt; I have a couple years of experience with Stratego and spent quite some time on this project, so I suspect some of my explanation here will skip steps that might help you understand better. So I encourage you to send me questions in the &lt;a href=&quot;https://www.reddit.com/r/rust/&quot;&gt;Reddit thread&lt;/a&gt; where I’ll post this.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Note:&lt;/em&gt; I have a couple years of experience with Stratego and spent quite some time on this project, so I suspect some of my explanation here will skip steps that might help you understand better. So I encourage you to send me questions in the &lt;a href=&quot;https://www.reddit.com/r/rust/comments/6ryhrl/building_a_faster_interpreter_for_an_old_language/&quot;&gt;Reddit thread&lt;/a&gt; where I’ll post this.&lt;/p&gt;
 
 &lt;ul id=&quot;markdown-toc&quot;&gt;
   &lt;li&gt;&lt;a href=&quot;#an-introduction-to-stratego&quot; id=&quot;markdown-toc-an-introduction-to-stratego&quot;&gt;An introduction to Stratego&lt;/a&gt;&lt;/li&gt;
