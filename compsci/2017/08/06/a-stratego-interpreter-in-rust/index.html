@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>A Stratego interpreter in Rust</title>
+    <meta name="description" content="A web log. Mostly about computer science-y stuff. 
+">
+
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="canonical" href="http://blog.jeffsmits.net/compsci/2017/08/06/a-stratego-interpreter-in-rust/">
+    
+    <link rel="stylesheet" type="text/css" href="/css/katex.min.css">
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">Whatever</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">A Stratego interpreter in Rust</h1>
+    <p class="post-meta">Aug 6, 2017</p>
+  </header>
+
+  <article class="post-content">
+    <p>At the end of my last post, three months ago by now, I promised a blog post about <a href="https://gitlab.com/Apanatshka/strs">the Stratego interpreter that I am writing</a>. In fact I promised it soon, which sadly became “soon”. Life happened, deadlines on top of deadlines with major stress. I made it through in one piece though, so here’s the long promised blog post.</p>
+
+<p>I assume you’re already a bit familiar with Rust, most of my blog posts use it. I’m using it for side-projects, one of which is writing a performant Stratego interpreter. By Stratego, in this case, I mean the <a href="http://strategoxt.org">programming language</a>. In this blog post I’ll give you a look into the process of building this interpreter and all that I learnt about Rust while doing so. But I’ll also go deep into the quirky semantics of Stratego, because it was (usually) fun to figure out! If you like the <a href="https://www.destroyallsoftware.com/talks/wat">Wat</a> talk, I’m sure you’ll enjoy some of this stuff too.</p>
+
+<p><em>Note:</em> I have a couple years of experience with Stratego and spent quite some time on this project, so I suspect some of my explanation here will skip steps that might help you understand better. So I encourage you to send me questions in the <a href="https://www.reddit.com/r/rust/">Reddit thread</a> where I’ll post this.</p>
+
+<ul id="markdown-toc">
+  <li><a href="#an-introduction-to-stratego" id="markdown-toc-an-introduction-to-stratego">An introduction to Stratego</a></li>
+  <li><a href="#where-to-start" id="markdown-toc-where-to-start">Where to start?</a>    <ul>
+      <li><a href="#stratego-core" id="markdown-toc-stratego-core">Stratego Core</a></li>
+    </ul>
+  </li>
+  <li><a href="#the-interpreter" id="markdown-toc-the-interpreter">The interpreter</a>    <ul>
+      <li><a href="#mutable-contexts-backtracking-and-closures" id="markdown-toc-mutable-contexts-backtracking-and-closures">Mutable contexts, backtracking and closures</a></li>
+      <li><a href="#mutable-contexts-and-pattern-matching" id="markdown-toc-mutable-contexts-and-pattern-matching">Mutable contexts and pattern matching</a></li>
+      <li><a href="#lists-explosions-and-dynamic-type-checks" id="markdown-toc-lists-explosions-and-dynamic-type-checks">Lists, explosions and dynamic type checks</a></li>
+    </ul>
+  </li>
+  <li><a href="#optimising-the-interpreter" id="markdown-toc-optimising-the-interpreter">Optimising the interpreter</a>    <ul>
+      <li><a href="#removing-overzealous-cloning-commit" id="markdown-toc-removing-overzealous-cloning-commit">Removing overzealous cloning <a href="https://gitlab.com/Apanatshka/strs/commit/3c725ab20e6a995a21340551384f5abe7b3899df">(commit)</a></a></li>
+      <li><a href="#fnv-hashing-commit" id="markdown-toc-fnv-hashing-commit">FNV hashing <a href="https://gitlab.com/Apanatshka/strs/commit/cfd4c0ca48412f5e23d2db8e72b7d8a558dc1024">(commit)</a></a></li>
+      <li><a href="#make-structure-follow-common-patterns-commit" id="markdown-toc-make-structure-follow-common-patterns-commit">Make structure follow common patterns <a href="https://gitlab.com/Apanatshka/strs/commit/f100043fc4cc3ba4ed06d74a7e6f941efe028bdd">(commit)</a></a></li>
+      <li><a href="#specialise-pattern-matching-commit" id="markdown-toc-specialise-pattern-matching-commit">Specialise pattern matching <a href="https://gitlab.com/Apanatshka/strs/commit/96fee995511645faa9be6b20bb229af24a56c1c1">(commit)</a></a></li>
+      <li><a href="#less-string-allocation-aka-all-the-lifetimes-commit" id="markdown-toc-less-string-allocation-aka-all-the-lifetimes-commit">Less String allocation a.k.a. <em>all</em> the lifetimes! <a href="https://gitlab.com/Apanatshka/strs/commit/39f8cb8624d21876f32807705b898e24925b3135">(commit)</a></a></li>
+      <li><a href="#lazily-cache-constants" id="markdown-toc-lazily-cache-constants">Lazily cache constants</a></li>
+      <li><a href="#planned-copy-propagation-on-ctree" id="markdown-toc-planned-copy-propagation-on-ctree">Planned: Copy Propagation on CTree</a></li>
+      <li><a href="#primitives-and-perfect-hashing" id="markdown-toc-primitives-and-perfect-hashing">Primitives and Perfect Hashing</a></li>
+    </ul>
+  </li>
+  <li><a href="#process" id="markdown-toc-process">Process</a>    <ul>
+      <li><a href="#tests" id="markdown-toc-tests">Tests</a></li>
+      <li><a href="#tools" id="markdown-toc-tools">Tools</a></li>
+    </ul>
+  </li>
+  <li><a href="#footnotes" id="markdown-toc-footnotes">Footnotes</a></li>
+</ul>
+
+<h1 id="an-introduction-to-stratego">An introduction to Stratego</h1>
+
+<p>So what is Stratego if not the board game? <a href="http://strategoxt.org">Stratego</a> is a transformation language, a language in which you write transformation rules that can then be applied to your data. Since these transformation rules do pattern matching, and data in Stratego is immutable, this already starts to feel a little bit like functional programming. The innovation in Stratego is that besides single transformation rules, is has generic <em>strategies</em> for traversing data, so you can apply rules in different orderings in different places. So that’s where the name Stratego comes from, and in academic circles this is sometimes called strategic programming.</p>
+
+<p>Before we go into an example of these rules and strategies, you should know that Stratego operates on ATerms, which you can read about in my <a href="/compsci/2017/05/07/first-published-crate-aterm/">previous blog post</a>. In short ATerms describe trees, where every node has a name (constructor) and a number of children (except the leaves of course, which can also be numbers or strings). Stratego is very weakly dynamically typed, you need to define a constructor with the right amount of children to be able to use it, but the types of the children can be anything.</p>
+
+<pre><code class="language-stratego">signature constructors
+  Var : String -&gt; Expr // these type names don't have meaning in Stratego
+  Let : String * Expr * Expr -&gt; Expr
+  Num : Int -&gt; Expr
+  BOp : Expr * Op * Expr -&gt; Expr
+  Plus : Op
+  Minus : Op
+
+rules
+
+  var-to-one: Var(_) -&gt; Num(1)
+  
+strategies
+
+  all-var-to-one = bottomup(try(var-to-one))
+</code></pre>
+
+<p>The signatures of constructors defined here give the feeling of the AST for a small functional programming language (modulo actual functions). Although <code class="highlighter-rouge">Var</code> nodes would be near the leaves of an AST, we can simply write a rule <code class="highlighter-rouge">var-to-one</code> that matches on any of them and transforms it into a number literal. The strategy <code class="highlighter-rouge">all-var-to-one</code> then tries to apply this rule over an entire tree in bottom-up (or post-order) fashion.</p>
+
+<h1 id="where-to-start">Where to start?</h1>
+
+<p>Stratego has a “core language”, which the compiler translates everything to first. A core language is an intermediate representation that is a subset of the surface language. In a way, you could say the rest is just syntactic sugar. What a core language has over any arbitrary intermediate representation is that you can write it ourselves and feed it to the same compiler, since it’s just a subset of the surface language. So if you’re not exactly sure of the semantics of a piece of code, you can write a little test, use the original compiler, and see what it’s supposed to do. I did this quite a lot, and in <a href="https://gitlab.com/Apanatshka/strs">the repository</a> you can find a directory <code class="highlighter-rouge">example-inputs</code> in which I saved some of those tests.</p>
+
+<h2 id="stratego-core">Stratego Core</h2>
+
+<p>The idea in Stratego Core is this: You always have a current term (data) implicitly that you can operate on with strategies. Here are some strategies:</p>
+
+<ol>
+  <li>You can replace the current term by building a different term with <code class="highlighter-rouge">!newterm</code>.</li>
+  <li>You can pattern match on the current term to put it in a variable or unpack the structure a little further with <code class="highlighter-rouge">?pattern</code>.</li>
+  <li>The semicolon combines strategies into a sequence.</li>
+  <li>Curly braces create a scope in which you can define fresh variables like: <code class="highlighter-rouge"><span class="p">{</span><span class="err">fresha,</span><span class="w"> </span><span class="err">newb:</span><span class="w"> </span><span class="err">strat</span><span class="w"> </span><span class="p">}</span></code>. If you put an already bound variable in a pattern match there is an equality check at that position.</li>
+  <li>The guarded choice operator <code class="highlighter-rouge">cond &lt; thenbranch + elsebranch</code> catches failure in <code class="highlighter-rouge">cond</code> and goes into either branch. Before going into the <code class="highlighter-rouge">elsebranch</code> after failure, the bindings from <code class="highlighter-rouge">cond</code> are undone.</li>
+  <li>There is a let construct <code class="highlighter-rouge">let strategyname(stratarg|termarg) = strategybody in letbodystrategy end</code>, that allows you to define local strategies, which you can call by name. These defined strategies can take term arguments and strategy arguments.</li>
+</ol>
+
+<p>Here’s the enum definition:</p>
+
+<div class="language-rust highlighter-rouge"><pre class="highlight"><code><span class="k">pub</span> <span class="k">enum</span> <span class="n">Strategy</span> <span class="p">{</span>
+    <span class="nf">Build</span><span class="p">(</span><span class="n">BuildTerm</span><span class="p">),</span>
+    <span class="nf">Match</span><span class="p">(</span><span class="n">MatchTerm</span><span class="p">),</span>
+    <span class="nf">Seq</span><span class="p">(</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">),</span>
+    <span class="nf">Scope</span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">),</span>
+    <span class="nf">GuardedLChoice</span><span class="p">(</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">),</span>
+    <span class="nf">Let</span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Def</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">),</span>
+    <span class="nf">CallT</span><span class="p">(</span><span class="nb">String</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">BuildTerm</span><span class="o">&gt;</span><span class="p">),</span>
+    <span class="err">...</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Beside strategy calls, there can also be primitive calls. Primitives have native implementations, and there are quite a few for Stratego that the compiler uses. There are couple more, so here’s the rest of the enum with some comments on what they are for:</p>
+
+<div class="language-rust highlighter-rouge"><pre class="highlight"><code><span class="k">pub</span> <span class="k">enum</span> <span class="n">Strategy</span> <span class="p">{</span>
+    <span class="err">..</span><span class="nf">.
+    PrimT</span><span class="p">(</span><span class="nb">String</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">BuildTerm</span><span class="o">&gt;</span><span class="p">),</span>
+    <span class="nf">CallDynamic</span><span class="p">(</span><span class="nb">String</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">BuildTerm</span><span class="o">&gt;</span><span class="p">),</span> <span class="c">// calling strategies by string name</span>
+    <span class="n">Fail</span><span class="p">,</span> <span class="c">// fail</span>
+    <span class="n">Id</span><span class="p">,</span>   <span class="c">// do nothing</span>
+    <span class="c">// generic traversals: apply the strategy on the children of the current term,</span>
+    <span class="c">//  build up the term with the new children coming out of the strategy call</span>
+    <span class="nf">Some</span><span class="p">(</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">),</span> <span class="c">// apply on as many as possible, fail is it fails for all children</span>
+    <span class="nf">One</span><span class="p">(</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">),</span> <span class="c">// stop after application succeeds on one, fail if it fails for all</span>
+    <span class="nf">All</span><span class="p">(</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Strategy</span><span class="o">&gt;</span><span class="p">),</span> <span class="c">// only succeed if strategy succeeds on all children</span>
+    <span class="nf">ImportTerm</span><span class="p">(</span><span class="nn">ctree</span><span class="p">::</span><span class="n">ModName</span><span class="p">),</span> <span class="c">// directly load a file with an ATerm</span>
+    <span class="c">// (yes, this is bananas to put in here when you already have primitives</span>
+    <span class="c">//  for such side-effects, it's probably legacy stuff)</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Of particular note are <code class="highlighter-rouge">some</code>, <code class="highlighter-rouge">one</code> and <code class="highlighter-rouge">all</code>. These are the primitives that allow generic traversals over a whole tree, such as <code class="highlighter-rouge">bottomup(s) = all(bottomup(s)); s</code> (used in the example in the intro).</p>
+
+<p><strong>Important note:</strong> The language and surface syntax here is called Strategy Core. The Abstract Syntax Tree representation of that core language is what we will work with. This tree representation is called CTree, and I will probably use that term more than Stratego Core.</p>
+
+<h1 id="the-interpreter">The interpreter</h1>
+
+<p>The interpreter is a simple recursive interpreter, so it uses the normal call stack for Stratego’s call stack too. This is because I’m aiming for a fast interpreter, and I figured it would be both more effort and more overhead to manage my own call stack. We’ve already seen the <code class="highlighter-rouge">Strategy</code> enum that represents the program. We also need a “context” in which the bound and unbound variables are available. The compiler makes sure there are scopes everywhere that explicitly create fresh variables before they are used, those constructs map to push a new scope on the stack of variable scopes. The context also holds other state, like the ATerm factory (which allows us to reuse the parser in the ATerm crate while defining the exact data structure for ATerms ourselves), the state for some stateful primitives, the stack tracer (which I can probably get rid of), and primitives themselves.</p>
+
+<div class="language-rust highlighter-rouge"><pre class="highlight"><code><span class="k">impl</span> <span class="n">Strategy</span> <span class="p">{</span>
+  <span class="k">fn</span> <span class="nf">eval</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">MutContext</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="n">ATermRef</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">Result</span><span class="o">&lt;</span><span class="n">ATermRef</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="err">...</span>
+  <span class="p">}</span>
+  <span class="err">...</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>So the interpreter function is defined on the <code class="highlighter-rouge">Strategy</code> enum, it takes the current term and a context object, and returns a <code class="highlighter-rouge">Result</code> of ATerm where the error can be <code class="highlighter-rouge">StrategyFailure</code> or an internal interpreter error. The context is given by immutable reference because mutable references make it too difficult to work with… I’m afraid I gave up on the borrow checker there and just put <code class="highlighter-rouge">RefCell</code> inside the type and called it <code class="highlighter-rouge">MutContext</code>. I wonder if I can change that once Non-Lexical Lifetimes land.</p>
+
+<h2 id="mutable-contexts-backtracking-and-closures">Mutable contexts, backtracking and closures</h2>
+
+<p>Something to notice about this mutable context is that it doesn’t usually work well with things like closures and backtracking (in a guarded choice). However, in this case it is exactly what we need to “easily” recreate the freaky semantics of Stratego. Closures – you know, functions that can access variables from when they were defined – don’t carry around an environment of bindings in Stratego. Instead they have a pointer to the part of the bindings stack that they can see, <em>and mutate!</em> A closure in Stratego can bind a unbound variable to a value, therefore mutate the context in which it is executed. If that variable was from a scope outside of a guarded choice, the variable binding is also not undone when backtracking! So there is something very strange happening there, and you can <a href="https://gitlab.com/Apanatshka/strs/commit/804f2aba4eacd4c18cbf46efd537d70979cd0c7f">bet</a> that I was thoroughly stumped for while, trying to wrap my head around the behaviour. I tried a number of different things, <a href="https://gitlab.com/Apanatshka/strs/commit/343e70f050d76f93cc35f041ca29e2b0b0daeb61">including a hacky transaction system</a> and <a href="https://gitlab.com/Apanatshka/strs/commit/6d2973a1a39818d18c46c9a446a1722dfd5e69dd">partial overlay invalidation</a>. The only way I was able to understand it was as an ad-hoc thing that grew out of operationally sticky together closures and backtracking without thinking it all the way through. Mutating the context is certainly a used feature in Stratego to pass more that one term back from a strategy, but not backtracking the binding in some cases is kinda.. wat.</p>
+
+<p>So in the end the way that I modelled this is like so: The context has a stack of scopes, which binds names to strategy closures, and names to term values. A strategy closure has the <code class="highlighter-rouge">Strategy</code> inside, but also an offset of the stack of scopes at time of its creation. When it executes, it splits of the newer part of the stack of scopes.</p>
+
+<blockquote>
+  <p><strong>Side note:</strong> in a normal function programming language, you can return closures, which means the stack can grow smaller than the offset of the closure object, which means offsets don’t usually work. But in Stratego you can only pass strategies to other strategies, not return them. So here it works.</p>
+</blockquote>
+
+<p>A guarded choice pushes a special overlay scope on the stack of scopes. This overlay doesn’t have predefined fresh variables, but instead catches any writes to underlying unbound variables instead of letting them go through. If the guarded choice condition fails, we pop the overlay scope, removing all bindings that should be undone. If the guarded choice condition succeeds, we “apply” the overlay, creating the actual bindings, then discarding the overlay.</p>
+
+<p>Now the closure will sometimes pop off the overlay, when the closure was made before going into the guarded choice. The difficult thing about testing this behaviour, is that the <a href="https://github.com/metaborg/strategoxt/blob/49d82ee47335339a60980104eddb78f26fc7486b/strategoxt/stratego-libraries/java-backend/java/runtime/org/strategoxt/HybridInterpreter.java">reference interpreter in Java</a> has a bug that breaks backtracking; and the compiler refuses to do zero optimisations when compiling all the way to Java or C. When a closure is inlined, suddenly the behaviour is different.</p>
+
+<pre><code class="language-stratego">let g = ?b; fail in g &lt;+ (!b /* this fails if g is inlined */) end
+</code></pre>
+
+<h2 id="mutable-contexts-and-pattern-matching">Mutable contexts and pattern matching</h2>
+
+<p>One danger of thinking about this interpreter mostly in terms of immutable data, except for the context, was a hard to find bug I introduced in the pattern matching code. When matching a pattern in Stratego, a variable can be already bound, in which case an equality check is done, or it can be unbound, in which case it needs to be bound. Within a pattern match a variable may occur multiple times, and can be bound by one of those occurrences and matched against in the other places. The bug in the original attempt at implementing pattern matching was that bindings were directly mutated during pattern matching. So the pattern matching code could bind a variable, then later fail on another part of the pattern, and the earlier variable remained bound. Overlay scopes were already a thing by that time, so I could reuse those to easily fix the bug.</p>
+
+<h2 id="lists-explosions-and-dynamic-type-checks">Lists, explosions and dynamic type checks</h2>
+
+<p>You can probably imagine most of the options possible for pattern matching. Literals, variables, ATerms with patterns for children. There can also be annotations on ATerms, so those can be a matched against too. There is another pattern though. It’s called the “explode pattern” and it is a form of reflection. It gives you access to the constructor of a matched term as a string, and to the children as a list. You can also implode a string and a list to a term in a build operation.</p>
+
+<p>So far, so good. But what happens when you try to explode a string? Or an integer? Or a list? Since failure is a normal thing in Stratego, and type errors aren’t, it would make sense to fail to explode strings and such right? Well, in case of an integer it is actually interpreted as an “integer constructor” with zero children. In case of a string, the constructor you get is an escaped version of the string (yes, starting with <code class="highlighter-rouge">\"</code>). Then there’s the list case…</p>
+
+<p>In Stratego, if you don’t import the standard library, you need to at least define the constructors <code class="highlighter-rouge">Nil/0</code> and <code class="highlighter-rouge">Cons/2</code>. This is because Stratego provides special syntax for lists like this: <code class="highlighter-rouge">[]</code>, <code class="highlighter-rouge">[head | tail]</code>, <code class="highlighter-rouge">[item1, item2]</code>, <code class="highlighter-rouge">[item1, item2 | tail]</code>. Of course in Stratego Core code you only see the basic cons-nil version. Therefore an explode of a list should give you <code class="highlighter-rouge">"Cons"</code> or <code class="highlighter-rouge">"Nil"</code> for a constructor right?</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; str '![]; ?cons#(children); !cons'
+[]
+</code></pre>
+</div>
+
+<p>… Maybe it’s a weird thing with the empty list?</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; str '![1, 2]; ?cons#(children); !(cons, children)'
+([], [1,2])
+</code></pre>
+</div>
+
+<p>Ok, I guess lists are handled specially in explosions. But at least you can just use the constructor strings as normal and still get a list right?</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; str '!([], "Nil"#([]))'
+([], Nil)
+</code></pre>
+</div>
+
+<p>wat.</p>
+
+<p>So here’s my theory: Legacy interacting with new features. ATerms have a notion of lists as a separate thing. In Stratego you also want to walk over lists, so it helps to see them as cons-nil lists. But they are still represented specially in memory. The interaction with reflection wasn’t thought through fully, and so we can observe the difference between an ATerm constructor of <code class="highlighter-rouge">Nil()</code> and an ATerm empty list <code class="highlighter-rouge">[]</code>.</p>
+
+<p>Awkward, but perfectly reproducible behaviour. I only had the refactor lots of things, touching many files, forgetting something in three different places, spending the whole day debugging issues, I’m not resenting this at all<sup id="fnref:list-resentment"><a href="#fn:list-resentment" class="footnote">1</a></sup>.</p>
+
+<h1 id="optimising-the-interpreter">Optimising the interpreter</h1>
+
+<p>At the start of July I had finally squashed all the bugs I could find and passed all tests. Then it became time to check the performance of the interpreter and start optimising it.</p>
+
+<p>The first benchmark I ran to compare my interpreter’s speed with the Java based interpreter was <a href="https://gforge.inria.fr/scm/viewvc.php/rec/2015-CONVECS/STRATEGO/benchexpr10.str?view=markup">a program</a> from a researcher who’s working on a comparison of the performance of many rewrite systems. (Some of these programs came from the <a href="http://fsl.cs.illinois.edu/index.php/Rewrite_Engines_Competition">Rewriting Engines Competition</a>).</p>
+
+<p>Anyways, the result was that the Java based interpreter, including JVM startup time, was about 4 times faster than my Rust based interpreter on this program. Granted, this is the <a href="https://github.com/metaborg/strategoxt/blob/49d82ee47335339a60980104eddb78f26fc7486b/strategoxt/stratego-libraries/java-backend/java/runtime/org/strategoxt/HybridInterpreter.java">version of the Java based interpreter</a> with some performance overrides. But I would have expected that simply by implementing things in Rust would be faster, especially because the Java based interpreter uses continuation passing style to implement its own call stack.</p>
+
+<p>Here are some measurements:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> # Rust based interpreter
+$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr10.ctree -l libstratego-lib
+result = true
+ # I shortened the time output here so you don't need to scroll horizontally
+9.44s user 0.05s system 99% cpu 9.515 total
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> # Java based interpreter
+$&gt; time java -cp /usr/local/share/strategoxt/strategoxt/strategoxt.jar org.strategoxt.HybridInterpreter benches/2015-CONVECS/benchexpr10.ctree main
+result = true
+ # snipped the stacktrace here on an explicit exit with code 0, silly interpreter
+6.28s user 0.35s system 279% cpu 2.372 total
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> # Compiling to Java and timing the Java execution (without the JVM startup I think)
+$&gt; str -i benches/2015-CONVECS/benchexpr10.str
+result = true
+
+real	0m0.450s
+user	0m0.683s
+sys	0m0.085s
+ # So the sum total is: 0m1.218s
+</code></pre>
+</div>
+
+<p>At this point I decided it was time to study some blog posts I has bookmarked about profiling Rust programs. I settled on using valgrind with the callgrind and cachegrind tools. (Cachegrind wasn’t really necessary because I never came close to needing to optimise cache misses, but I included it in the first runs of the profiler anyway). The profiler pointed out that most time was spent in malloc related functions. I <em>had</em> been taking many shortcuts by using clone instead of trying to reason with the borrow checker. Time to reduce those allocations.</p>
+
+<h2 id="removing-overzealous-cloning-commit">Removing overzealous cloning <a href="https://gitlab.com/Apanatshka/strs/commit/3c725ab20e6a995a21340551384f5abe7b3899df">(commit)</a></h2>
+
+<p>The first place I went looking was a place where I’d tried to return a borrow, but borrowck wouldn’t have it. This was the place which looks up the code for constructing a closure. Since all code is already in memory, a closure only need a borrow, it doesn’t need to clone the entire tree of instructions. Of course that does require that the closures, which live on the scopes stack, have a lifetime parameter for that borrow, which means the scopes stack needs a lifetime parameter, which means the <code class="highlighter-rouge">MutContext</code> needs a lifetime parameter. Since <code class="highlighter-rouge">MutContext</code> is an argument to all the primitives I implemented, I made good use of the find-and-replace mechanism of my IDE.</p>
+
+<p>The result of this change was massive:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr10.ctree -l libstratego-lib
+result = true
+1.46s user 0.02s system 99% cpu 1.496 total
+</code></pre>
+</div>
+
+<p>Suddenly we’re already faster than the Java based interpreter and closing in on the compiled version! Let’s switch to a bigger benchmark. This is one where the Java based interpreter takes forever, so I’m excluding that one.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; str -i benches/2015-CONVECS/benchexpr20.str # Compiled version
+result = true
+
+real	0m4.552s
+user	0m8.194s
+sys	0m0.729s
+ # Sum total: 0m13.475s
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr20.ctree -l libstratego-lib
+result = true
+1298.19s user 2.96s system 99% cpu 21:43.63 total
+ # This benchmark could have a slightly higher time
+ # because I was doing other things while the benchmark was running
+ # but the point is it takes really long for our interpreter to get through this benchmark
+</code></pre>
+</div>
+
+<h2 id="fnv-hashing-commit">FNV hashing <a href="https://gitlab.com/Apanatshka/strs/commit/cfd4c0ca48412f5e23d2db8e72b7d8a558dc1024">(commit)</a></h2>
+
+<p>One fairly easy thing we can do in Rust (I really ❤ that design), is swap out the hash function for hashsets and hashmaps. This is significant because a scope uses hashmaps to map from variable names to values. So I tried <a href="https://docs.rs/fnv/">FNV</a> hashing, and it sped things up nicely with minimal code change!</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr10.ctree -l libstratego-lib
+result = true # this is the smaller benchmark. The old total time was 1.496
+1.15s user 0.02s system 99% cpu 1.177 total
+ # Note that this is a faster time than the compiled version!
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr20.ctree -l libstratego-lib
+result = true # this is the larger benchmark. The old total time was 21:43.63
+1000.62s user 2.65s system 99% cpu 16:45.36 total
+ # This time is still 77x slower than the compiled version though
+</code></pre>
+</div>
+
+<h2 id="make-structure-follow-common-patterns-commit">Make structure follow common patterns <a href="https://gitlab.com/Apanatshka/strs/commit/f100043fc4cc3ba4ed06d74a7e6f941efe028bdd">(commit)</a></h2>
+
+<p>While I was figuring out the weirdness around closures and backtracking, I found a little optimisation that the Java based interpreter made to its internal CTree representation. Sequences were lists instead of right-recursive binary trees, and guarded choice were lists of pairs. These are common patterns in Stratego Core, long chains of sequences and guarded choices. Flattening those patterns in the tree representation helps quite a bit. I already had a preprocessing step on the CTree to simplify things a bit, so this fit right in.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr10.ctree -l libstratego-lib
+result = true # this is the smaller benchmark. The old total time was 1.177
+1.01s user 0.02s system 99% cpu 1.039 total
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr20.ctree -l libstratego-lib
+result = true # this is the larger benchmark. The old total time was 16:45.36
+833.91s user 0.70s system 99% cpu 13:54.76 total
+</code></pre>
+</div>
+
+<h2 id="specialise-pattern-matching-commit">Specialise pattern matching <a href="https://gitlab.com/Apanatshka/strs/commit/96fee995511645faa9be6b20bb229af24a56c1c1">(commit)</a></h2>
+
+<p>Those long guarded choice chains, those mostly come from overloaded rules. Overloaded rules typically match on different constructors. If most are matching on different constructors, then we can find the constructor literals in the CTree as strings. So we could for the first level of the match exclude a lot of patterns by just checking the constructor of the term being matched. The addition here is a pre-selection mechanism based on constructor string, using a hashmap. Of course it <em>is</em> important to keep ordering of rules the same when multiple match on the same outer constructor, so there is a bit of thought (and code) that went into this to keep the same semantics.</p>
+
+<p>(Using commit <a href="https://gitlab.com/Apanatshka/strs/commit/45bb8b56a4439531681e923f86947e2cf95aa584">45bb8b56</a> instead of the commit linked by the heading, because of bugfixes after the change)</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr10.ctree -l libstratego-lib
+result = true # this is the smaller benchmark. The old total time was 1.039
+0.18s user 0.02s system 96% cpu 0.204 total
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr20.ctree -l libstratego-lib
+result = true # this is the larger benchmark. The old total time was 13:54.76
+61.18s user 0.50s system 99% cpu 1:01.81 total
+</code></pre>
+</div>
+
+<p>Finally getting more reasonable times! Still ~4.5x slower than the compiled version. But it can now take longer to compile the release build than to run this benchmark.</p>
+
+<h2 id="less-string-allocation-aka-all-the-lifetimes-commit">Less String allocation a.k.a. <em>all</em> the lifetimes! <a href="https://gitlab.com/Apanatshka/strs/commit/39f8cb8624d21876f32807705b898e24925b3135">(commit)</a></h2>
+
+<p>At this point I was still seeing a lot of time spent in allocation, and I figured all those owned strings for constructors in the ATerm data couldn’t be very good. If we could share all those constructor strings, that would also make matching faster because you could do pointer equality for the constructors. This took a lot of changes in the <a href="https://docs.rs/aterm/0.17.0/aterm/">aterm</a> crate, which brought the version up to 0.17. Then many more changes in the interpreter itself, threading a new lifetime parameter through basically every type I had defined, because they all contained ATerms which now had a lifetime for the <code class="highlighter-rouge">&amp;str</code>. Kind of ugly, and I’m not really happy about how much time and effort it took. I wonder if lifetime elision can be improved, or if this is really necessary and what I’m missing is a good refactoring tool. In the end there was a nice speedup though.</p>
+
+<p>(The linked commit in the heading is the one introducing all the lifetimes. Commit <a href="https://gitlab.com/Apanatshka/strs/commit/8689c23e5f34d26c3c5dda33027c549c27d1bc62">8689c23e</a> is used below for the benchmarks. )</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr10.ctree -l libstratego-lib
+result = true # this is the smaller benchmark. The old total time was 0.204
+0.18s user 0.02s system 96% cpu 0.206 total 
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$&gt; time ./target/release/strs benches/2015-CONVECS/benchexpr20.ctree -l libstratego-lib
+result = true # this is the larger benchmark. The old total time was 1:01.81
+60.04s user 0.51s system 99% cpu 1:00.60 total
+</code></pre>
+</div>
+
+<p>After all that, this isn’t very exciting is it? I’m not sure why this doesn’t have much of an impact.</p>
+
+<h2 id="lazily-cache-constants">Lazily cache constants</h2>
+
+<p>(Commits <a href="https://gitlab.com/Apanatshka/strs/commit/4845c86cdfbf5a6a236d4c1c0a45d7ff0e70dcc4">4845c86c</a> through <a href="https://gitlab.com/Apanatshka/strs/commit/6d72c9760212d238f73e1f77ba3c14d8d88f9a63">6d72c976</a> – I need to refactor this code, it’s kind of ugly)</p>
+
+<p>The compiler for Stratego extracts constants and initialises them at startup of the program. I’m not sure if that’s part of the time measurement it gives. To do something similar I added another caching layer on some build and match patterns during preprocessing of the CTree, when there aren’t any variables in the pattern and the pattern is “large enough”. Currently it’s pretty conservative and only adds the caching layer at the top level. This did not slow down or speed up the two benchmarks, and since the larger one wasn’t slowed down I’m leaving it in. I still need to try if it has a positive effect with more aggressive caching of subterms.</p>
+
+<h2 id="planned-copy-propagation-on-ctree">Planned: Copy Propagation on CTree</h2>
+
+<p>After profiling and optimising the interpreter internals to the best of my abilities I was thinking about what else there is to optimise. The core code that’s output by the compiler is not really optimised, optimisations are done in a later stage on the Java code. Some of those optimisations seem to coincide with what I started thinking about while reading CTree output of small example programs.</p>
+
+<p>The compiler introduces a lot of local variables that are only bound to the values of other variables and built later. Basically making a lot of useless aliases when the original variable could also be used. I’m hoping to make a tool that does a CTree → CTree transformation that removes a lot of useless variables and some of the code around that. That way it can be a preprocessing step that’ll help both my interpreter and the Java based version.</p>
+
+<h2 id="primitives-and-perfect-hashing">Primitives and Perfect Hashing</h2>
+
+<p>One last thing I’d like to mention is an optimisation I added very near the start of the project. The list of primitives is know at compile-time, so we could make lookup of primitive strings really fast through compile-time preprocessing. I had already read about <a href="https://docs.rs/phf/0.7.21/phf/">phf</a>, a crate for compile-time optimized maps and sets using Perfect Hash Functions. I’m currently using phf_codegen, to avoid needing the nightly compiler for the generation of the PHF maps. This way I also learned a bit about how to use a <code class="highlighter-rouge">build.rs</code> script, including adapting it to <a href="https://gitlab.com/Apanatshka/strs/blob/ee7a9610776508a93423e625221a6f02c44e37f4/build.rs#L11">create unit tests based on a directory of input files</a>.</p>
+
+<h1 id="process">Process</h1>
+
+<p>Originally I had a pretty good idea how much time I’d spent on this project. I spent half a day to finish the ATerm parser. Then I spent three and a half days getting the basic language constructs parsed and interpreted. This was a long weekend, so I had time to do that kind of a sprint. After a normal weekend where I didn’t have much time to work on it, there was another 4 day weekend. So I spent another 3 days in concentration and implemented a lot of primitives from the standard library. After that I got less and less time, snuck in an hour or two here and there on an evening or weekend. At this point I lost track of how much time I was spending on the project exactly, but it can’t have been too much with stolen hours and the ramp up time it takes to load the code base into your short-term memory again (even a fairly small one). After the deadlines were over I spent my free time on recuperating, and only after a while picked this project back up.</p>
+
+<h2 id="tests">Tests</h2>
+
+<p>Fairly early, a week or so after the second long weekend sprint, I made the script to run all the compiler tests. It took a long time to get through all of them, but it made this whole project infinitely easier. I mean that, I don’t think I could have made a correct, bug-for-bug compatible interpreter of this language without the 135 tests<sup id="fnref:no-of-tests"><a href="#fn:no-of-tests" class="footnote">2</a></sup>.</p>
+
+<h2 id="tools">Tools</h2>
+
+<p>I’m very happy with the new style of the nightly <code class="highlighter-rouge">rustfmt</code>! It looks so much better. I do run into a bug of output that doesn’t parse, which I should really try to narrow down and submit an issue about.</p>
+
+<p>I also used <code class="highlighter-rouge">clippy</code> extensively during this project. I’ve been a fan of this tool from the start, and I’m particularly thankful for the <a href="https://github.com/rust-lang-nursery/rust-clippy/wiki#needless_lifetimes"><code class="highlighter-rouge">needless_lifetimes</code></a> lint. I never remember the lifetime elision rules, and during optimisation of the code I was adding lifetimes left and right. When I forgot some, typeck or borrowck would prod me to add them, but clippy helped me clean up and simplify code.</p>
+
+<p>I already mentioned tests. I guess it was also obvious in the post that I ran the benchmarks manually. Most of the benchmark programs simply ran too long to really have a use for the benchmark harness in nightly.</p>
+
+<p>I also mentioned callgrind for profiling. I used kcachegrind as the tool to explore the results. I don’t understand all of the options, but enough to explore what the biggest costs were.</p>
+
+<h1 id="footnotes">Footnotes</h1>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:list-resentment">
+      <p>Actually if I <a href="https://gitlab.com/Apanatshka/strs/commit/dd224f4a35bb5905b5019cdf2cd9787ce1601cb7">look back at my commit message</a>, I truly didn’t resent the change. I was already running into the issues of converting between ATerm list and cons-nil list, so according to the commit message everything became easier actually.&nbsp;<a href="#fnref:list-resentment" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:no-of-tests">
+      <p>Originally there were a few more, but some didn’t make sense and the original compiler and interpreter failed them too.&nbsp;<a href="#fnref:no-of-tests" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </article>
+
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Whatever</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li><a href="mailto:jeff.smits@gmail.com">jeff.smits@gmail.com</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/Apanatshka">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+                </svg>
+              </span>
+
+              <span class="username">Apanatshka</span>
+            </a>
+          </li>
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">A web log. Mostly about computer science-y stuff. 
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
