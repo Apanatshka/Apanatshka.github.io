@@ -29,7 +29,7 @@ For those of you who are interested in implementations of this format in other l
 
 As mentioned in the high-level description above, this was used by a number of tools created by researchers as an exchange format. I actually use this format myself at TU Delft. So I figured I could combine my wish to learn more Rust and performance engineering, with some of the knowledge I have about ageing tools I use!
 
-In particular, I'm currently working on an interpreter, written in Rust, that executes Stratego Core code. [Stratego](http://strategoxt.org/) (or Stratego/XT, to disambiguate from the board game) is a language for program transformation. The Stratego compiler can return an intermediate representation called the "core" language, as an AST in the ATerm format. I'm planning to write about this interpreter in another blog post soon.
+In particular, I'm currently working on an interpreter, written in Rust, that executes Stratego Core code. [Stratego](http://strategoxt.org/) (or Stratego/XT, to disambiguate from the board game) is a language for program transformation. The Stratego compiler can return an intermediate representation called the "core" language, as an AST in the ATerm format. I'm planning to write about this interpreter in another blog post soon. (EDIT: [I have now]({% post_url 2017-08-06-a-stratego-interpreter-in-rust %}))
 
 # The implementation
 
