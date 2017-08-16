@@ -323,7 +323,7 @@ The compiler introduces a lot of local variables that are only bound to the valu
 
 ## Primitives and Perfect Hashing
 
-One last thing I'd like to mention is an optimisation I added very near the start of the project. The list of primitives is know at compile-time, so we could make lookup of primitive strings really fast through compile-time preprocessing. I had already read about [phf](https://docs.rs/phf/0.7.21/phf/), a crate for compile-time optimized maps and sets using Perfect Hash Functions. I'm currently using phf_codegen, to avoid needing the nightly compiler for the generation of the PHF maps. This way I also learned a bit about how to use a `build.rs` script, including adapting it to [create unit tests based on a directory of input files](https://gitlab.com/Apanatshka/strs/blob/ee7a9610776508a93423e625221a6f02c44e37f4/build.rs#L11).
+One last thing I'd like to mention is an optimisation I added very near the start of the project. The list of primitives is known at compile-time, so we could make lookup of primitive strings really fast through compile-time preprocessing. I had already read about [phf](https://docs.rs/phf/0.7.21/phf/), a crate for compile-time optimized maps and sets using Perfect Hash Functions. I'm currently using phf_codegen, to avoid needing the nightly compiler for the generation of the PHF maps. This way I also learned a bit about how to use a `build.rs` script, including adapting it to [create unit tests based on a directory of input files](https://gitlab.com/Apanatshka/strs/blob/ee7a9610776508a93423e625221a6f02c44e37f4/build.rs#L11).
 
 # Process
 
