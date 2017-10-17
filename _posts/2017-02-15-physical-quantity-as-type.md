@@ -86,7 +86,7 @@ and more generic that would work with any units.
 
 ## Late conversion
 
-I already eluded to some issues with normalisation[^normalisation-problems]. When you have some 
+I already alluded to some issues with normalisation[^normalisation-problems]. When you have some 
 form of case distinction (algebraic data types is what you think of of course, not some silly 
 sub-typing hierarchy like OOP) in you type system (`enum` in Rust), you can also defer the 
 normalisations. You can defer conversion entirely within generic calculations, which seems slightly 
