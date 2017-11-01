@@ -35,7 +35,7 @@ In particular, I'm currently working on an interpreter, written in Rust, that ex
 
 Ok, so here's what you get from the `aterm` crate:
 
-1. A parser that takes in an text format ATerm string.
+1. A parser that takes in a text format ATerm string.
    - I have [a](https://gitlab.com/Apanatshka/aterm/issues/10) [number](https://gitlab.com/Apanatshka/aterm/issues/4) [of](https://gitlab.com/Apanatshka/aterm/issues/5) [issues](https://gitlab.com/Apanatshka/aterm/issues/6) open: basically zero-copy parsing and the other formats.
 2. A printer for the text format. Again, the other formats are todo.
 3. A factory trait for building ATerms.
