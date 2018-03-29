@@ -66,6 +66,7 @@ exclude:
   - CHANGELOG
   - Gemfile
   - Gemfile.lock
+  - basically-basic.gemspec
   - LICENSE
   - node_modules
   - Rakefile
