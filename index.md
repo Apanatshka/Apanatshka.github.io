@@ -8,7 +8,8 @@ I am a PhD student in the [Programming Languages Research Group](http://pl.ewi.t
 
 ## Conference articles
 
-- **Jeff Smits**, Eelco Visser. FlowSpec: declarative dataflow analysis specification. In Benoît Combemale, Marjan Mernik, Bernhard Rumpe, editors, *Proceedings of the 10th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2017, Vancouver, BC, Canada, October 23-24, 2017*. pages 221-231, ACM, 2017. [doi](http://doi.org/10.1145/3136014.3136029)
+- **Jeff Smits**, Eelco Visser. Gradually Typing Strategies. In *Proceedings of the 13th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2020, Virtual, USA, November 16-17, 2020*. ACM, 2020. [preprint]({{ '/assets/articles/sle20-paper4.pdf' | relative_url }}) [doi](https://doi.org/10.1145/3426425.3426928)
+- **Jeff Smits**, Eelco Visser. FlowSpec: declarative dataflow analysis specification. In Benoît Combemale, Marjan Mernik, Bernhard Rumpe, editors, *Proceedings of the 10th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2017, Vancouver, BC, Canada, October 23-24, 2017*. pages 221-231, ACM, 2017. [doi](https://doi.org/10.1145/3136014.3136029)
 
 ## Journal articles
 
