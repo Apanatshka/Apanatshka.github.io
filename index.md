@@ -2,7 +2,7 @@
 layout: about
 ---
 
-I am a PhD student in the [Programming Languages Research Group](http://pl.ewi.tudelft.nl/) at Delft University of Technology. I have various research interests around language design and compiler technology. I've worked on declarative specification of data-flow analysis, practical incremental compilation for existing languages, and gradual types. I've designed FlowSpec, a domain-specific language for the specification of data-flow analysis. For incremental compilation I've taken apart the compiler of the Stratego term transformation language, and reassembled it as an incremental compiler. I'm currently working on introducing a gradual type system to Stratego. FlowSpec and Stratego are part of the [Spoofax Language Workbench](http://spoofax.org). I am supervised by [Eelco Visser](http://eelcovisser.org). 
+I am a PhD student in the [Programming Languages Research Group](http://pl.ewi.tudelft.nl/) at Delft University of Technology. I have various research interests around language design and compiler technology. I've worked on declarative specification of data-flow analysis, practical incremental compilation for existing languages, and gradual types. I've designed FlowSpec, a domain-specific language for the specification of data-flow analysis. For incremental compilation I've taken apart the compiler of the Stratego term transformation language, and reassembled it as an incremental compiler. I'm currently working on a gradual type system for Stratego. FlowSpec and Stratego are part of the [Spoofax Language Workbench](http://spoofax.org). I was formerly supervised by [Eelco Visser](http://eelcovisser.org), we miss him dearly. 
 
 # Publications
 
