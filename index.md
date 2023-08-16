@@ -19,4 +19,6 @@ I am a PhD student in the [Programming Languages Research Group](http://pl.ewi.t
 
 ## Theses
 
-- **Jeff Smits**. The Static Semantics of the Green-Marl Graph Analysis Language: Formal Specification, Declarative Implementation and Integration with a Compiler Back-end. Master's thesis, Delft University of Technology, February 2016. 
+
+- **Jeff Smits**. Strategic Language Workbench Improvements. Doctoral thesis, Delft University of Technology, September 2023. In *IPA Dissertation Series*, Entry 2023-06. [pdf]({{ '/assets/articles/digital-dissertation.pdf' | relative_url }}) [doi](https://doi.org/10.4233/uuid:25f6f514-a07d-4b78-8cc3-2769555a5c20)
+- **Jeff Smits**. The Static Semantics of the Green-Marl Graph Analysis Language. Master's thesis, Delft University of Technology, February 2016. [repository](http://resolver.tudelft.nl/uuid:4f07cbbb-d017-41e8-aba6-8ff0c19f258d)
