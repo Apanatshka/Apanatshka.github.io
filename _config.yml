@@ -16,7 +16,7 @@
 lang: en-GB
 title: Jeff Smits
 email: J.Smits-1@tudelft.nl
-description: PhD candidate at Delft University of Technology
+description: Research Software Engineer at Delft University of Technology
 baseurl: # the optional subpath of your site, e.g. "/blog"
 url: "http://www.jeffsmits.net/"# the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 author:
