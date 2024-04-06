@@ -1,274 +1,92 @@
 <!DOCTYPE html>
-<!--
-    Basically Basic Jekyll Theme 1.3.1
-    Copyright 2017-2018 Michael Rose - mademistakes.com | @mmistakes
-    Free for personal and commercial use under the MIT license
-    https://github.com/mmistakes/jekyll-basically-theme/blob/master/LICENSE.md
--->
-<html lang="en-GB" class="no-js">
+<html lang="en">
+  
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <meta charset="utf-8">
+    <title>Jeff Smits | Research Software Engineer @ TU Delft</title>
+    <link rel="stylesheet" href="https://www.jeffsmits.net/main.css" />
+    <link rel="stylesheet" href="https://www.jeffsmits.net/fontawesome/css/fontawesome.css" />
+  </head>
   
-    
-    <!-- Begin Jekyll SEO tag v2.5.0 -->
-<title>Jeff Smits | Research Software Engineer at Delft University of Technology</title>
-<meta name="generator" content="Jekyll v3.8.4" />
-<meta property="og:title" content="Jeff Smits" />
-<meta name="author" content="Jeff Smits" />
-<meta property="og:locale" content="en_GB" />
-<meta name="description" content="Research Software Engineer at Delft University of Technology" />
-<meta property="og:description" content="Research Software Engineer at Delft University of Technology" />
-<link rel="canonical" href="http://www.jeffsmits.net//" />
-<meta property="og:url" content="http://www.jeffsmits.net//" />
-<meta property="og:site_name" content="Jeff Smits" />
-<script type="application/ld+json">
-{"name":"Jeff Smits","description":"Research Software Engineer at Delft University of Technology","author":{"@type":"Person","name":"Jeff Smits"},"@type":"WebSite","url":"http://www.jeffsmits.net//","headline":"Jeff Smits","@context":"http://schema.org"}</script>
-<!-- End Jekyll SEO tag -->
-
-  
-
-  <script>
-    /* Cut the mustard */
-    if ( 'querySelector' in document && 'addEventListener' in window ) {
-      document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + 'js';
-    }
-  </script>
-
-  <link rel="stylesheet" href="/assets/stylesheets/main.css">
-  
-
-  
-</head>
-
-
-  <body class="layout--about ">
-
-    <nav class="skip-links">
-  <h2 class="screen-reader-text">Skip links</h2>
-  <ul>
-    <li><a href="#primary-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
-    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
-    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
-  </ul>
-</nav>
-
-
-    <div class="sidebar-toggle-wrapper">
-      
-
-      <button class="toggle navicon-button larr" type="button">
-        <span class="toggle-inner">
-          <span class="sidebar-toggle-label visually-hidden">Menu</span>
-          <span class="navicon"></span>
-        </span>
-      </button>
-    </div>
-
-    <div id="sidebar" class="sidebar">
-      <div class="inner">
-        <nav id="primary-nav" class="site-nav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
-  <ul id="menu-main-navigation" class="menu">
-    <!-- Home link -->
-    <li class="menu-item">
-      <a href="/" itemprop="url">
-        <span itemprop="name">Jeff Smits</span>
-      </a>
-    </li>
-
-    <!-- site.pages links -->
-    
-    
-
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-  </ul>
-</nav>
-
-        <ul class="contact-list">
-  
-    <li>
-      <a href="mailto:J.Smits-1@tudelft.nl">
-        <span class="icon icon--email"><svg xmlns="http://www.w3.org/2000/svg" viewBox="313.1 3.7 16 16"><path d="M318.5 8.9c0-.2.2-.4.4-.4h4.5c.2 0 .4.2.4.4s-.2.4-.4.4h-4.5c-.3 0-.4-.2-.4-.4zm.4 2.1h4.5c.2 0 .4-.2.4-.4s-.2-.4-.4-.4h-4.5c-.2 0-.4.2-.4.4s.1.4.4.4zm3.5 1.2c0-.2-.2-.4-.4-.4h-3.1c-.2 0-.4.2-.4.4s.2.4.4.4h3.1c.2.1.4-.1.4-.4zm-1.5-8.4l-1.7 1.4c-.2.1-.2.4 0 .6s.4.2.6 0l1.4-1.2 1.4 1.2c.2.1.4.1.6 0s.1-.4 0-.6l-1.7-1.4c-.3-.1-.5-.1-.6 0zm7.8 6.2c.1.1.1.2.1.3v7.9c0 .8-.7 1.5-1.5 1.5h-12.5c-.8 0-1.5-.7-1.5-1.5v-7.9c0-.1.1-.2.1-.3l1.6-1.3c.2-.1.4-.1.6 0s.1.4 0 .6l-1.2 1 1.8 1.3v-4c0-.6.5-1.1 1.1-1.1h7.5c.6 0 1.1.5 1.1 1.1v4l1.8-1.3-1.2-1c-.2-.1-.2-.4 0-.6s.4-.2.6 0l1.6 1.3zm-11.6 2.2l4 2.8 4-2.8V7.6c0-.1-.1-.2-.2-.2h-7.5c-.1 0-.2.1-.2.2v4.6zm10.9-1l-4.7 3.4 3.4 2.6c.2.1.2.4.1.6-.1.2-.4.2-.6.1l-3.6-2.8-1.2.8c-.1.1-.3.1-.5 0l-1.2-.8-3.6 2.8c-.2.1-.4.1-.6-.1-.1-.2-.1-.4.1-.6l3.4-2.6-4.7-3.4v7.1c0 .4.3.6.6.6h12.5c.4 0 .6-.3.6-.6v-7.1z"/></svg></span>
-        <span class="label">Email</span>
-      </a>
-    </li>
-  
-
-  
-    <li><a href="https://github.com/Apanatshka">
-  <span class="icon icon--github"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414"><path d="M8 0C3.58 0 0 3.582 0 8c0 3.535 2.292 6.533 5.47 7.59.4.075.547-.172.547-.385 0-.19-.007-.693-.01-1.36-2.226.483-2.695-1.073-2.695-1.073-.364-.924-.89-1.17-.89-1.17-.725-.496.056-.486.056-.486.803.056 1.225.824 1.225.824.714 1.223 1.873.87 2.33.665.072-.517.278-.87.507-1.07-1.777-.2-3.644-.888-3.644-3.953 0-.873.31-1.587.823-2.147-.09-.202-.36-1.015.07-2.117 0 0 .67-.215 2.2.82.64-.178 1.32-.266 2-.27.68.004 1.36.092 2 .27 1.52-1.035 2.19-.82 2.19-.82.43 1.102.16 1.915.08 2.117.51.56.82 1.274.82 2.147 0 3.073-1.87 3.75-3.65 3.947.28.24.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.14.46.55.38C13.71 14.53 16 11.53 16 8c0-4.418-3.582-8-8-8"/></svg></span>
-  <span class="label">GitHub</span>
-</a>
-</li>
-  
-
-  
-    <li><a href="https://gitlab.com/Apanatshka">
-  <span class="icon icon--gitlab"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414"><path d="M15.97 9.058l-.895-2.756L13.3.842c-.09-.282-.488-.282-.58 0L10.946 6.3H5.054L3.28.842C3.188.56 2.79.56 2.7.84L.924 6.3.03 9.058c-.082.25.008.526.22.682L8 15.37l7.75-5.63c.212-.156.302-.43.22-.682"/></svg></span>
-  <span class="label">GitLab</span>
-</a>
-</li>
-  
-
-  
-    <li><a href="https://bitbucket.org/Apanatshka">
-  <span class="icon icon--bitbucket"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414"><path d="M8 0C4.187 0 1.055 1.02 1.055 2.315c0 .34.817 5.174 1.158 7.08.136.886 2.383 2.11 5.787 2.11s5.583-1.224 5.787-2.11c.34-1.906 1.158-6.74 1.158-7.08C14.877 1.02 11.813 0 8 0zm0 9.94c-1.226 0-2.18-.953-2.18-2.178 0-1.226.954-2.18 2.18-2.18 1.226 0 2.18.954 2.18 2.18C10.18 8.92 9.225 9.94 8 9.94zm0-6.944c-2.45 0-4.426-.41-4.426-.953 0-.545 1.975-.954 4.426-.954 2.45 0 4.426.4 4.426.95 0 .54-1.975.95-4.426.95z" fill-rule="nonzero"/><path d="M12.97 11.234c-.136 0-.204.068-.204.068S11.064 12.664 8 12.664s-4.766-1.362-4.766-1.362-.136-.068-.204-.068c-.136 0-.273.068-.273.272v.068c.273 1.43.477 2.452.477 2.588C3.438 15.182 5.48 16 7.932 16c2.45 0 4.494-.817 4.698-1.838 0-.136.204-1.158.476-2.588v-.068c.068-.136 0-.272-.136-.272z" fill-rule="nonzero"/><circle cx="8" cy="7.694" r="1.089"/></svg></span>
-  <span class="label">BitBucket</span>
-</a>
-</li>
-  
-
-  
-
-  
-    <li><a href="https://www.linkedin.com/in/jeff-smits">
-  <span class="icon icon--linkedin"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414"><path d="M13.632 13.635h-2.37V9.922c0-.886-.018-2.025-1.234-2.025-1.235 0-1.424.964-1.424 1.96v3.778h-2.37V6H8.51v1.04h.03c.318-.6 1.092-1.233 2.247-1.233 2.4 0 2.845 1.58 2.845 3.637v4.188zM3.558 4.955c-.762 0-1.376-.617-1.376-1.377 0-.758.614-1.375 1.376-1.375.76 0 1.376.617 1.376 1.375 0 .76-.617 1.377-1.376 1.377zm1.188 8.68H2.37V6h2.376v7.635zM14.816 0H1.18C.528 0 0 .516 0 1.153v13.694C0 15.484.528 16 1.18 16h13.635c.652 0 1.185-.516 1.185-1.153V1.153C16 .516 15.467 0 14.815 0z" fill-rule="nonzero"/></svg></span>
-  <span class="label">LinkedIn</span>
-</a>
-</li>
-  
-
-  <li>
-    
-  </li>
-</ul>
-
-      </div>
-    </div>
-
-    <div class="canvas">
-      <div class="wrapper">
+  <body>
+    <nav class="sidebar">
+      <ul>
         
-
-<header id="masthead">
-  <div class="inner">
-    <div class="title-area">
-      
-        <h1 class="site-title">
-          <a href="/">
-            
-            <span>Jeff Smits</span>
-          </a>
-        </h1>
-      
-    </div>
-  </div>
-</header>
-
-        <div class="initial-content">
-          <header class="intro">
-  
-
-  <div class="inner">
-    <div class="intro-text">
-      <h1 class="intro-title">Jeff Smits
-</h1>
-      
-
-      
-
-      
-
-      
-    </div>
-  </div>
-</header>
-
-
-<main id="main" class="page-content" aria-label="Content">
-  <div class="inner">
-    <div class="entry-wrap">
-      <div class="entry-content">
-        <p>I am a Research Software Engineer at Delft University of Technology (TU Delft), where I currently help out in the <a href="http://pl.ewi.tudelft.nl/">Programming Languages Research Group</a> on the <a href="https://www.spoofax.dev/">Spoofax Language Workbench</a> and the <a href="https://alg.ewi.tudelft.nl/">Algorithmics Research Group</a> on the Pumpkin CP-SAT solver. I have a PhD in Computer Science from TU Delft.</p>
-
-<p>I have various research interests around language design and compiler technology. I’ve worked on declarative specification of data-flow analysis, practical incremental compilation for existing languages, and gradual types. I’ve designed FlowSpec, a domain-specific language for the specification of data-flow analysis. For incremental compilation I’ve taken apart the compiler of the Stratego term transformation language, and reassembled it as an incremental compiler. I’ve added a gradual type system to Stratego (which sounds a lot more final than it is in practice). I’ve also worked with Toine Hartman during his Master’s thesis project on optimising Stratego’s peculiar form of pattern matching. FlowSpec and Stratego are part of the <a href="http://spoofax.org">Spoofax Language Workbench</a>. I was formerly supervised by <a href="http://eelcovisser.org">Eelco Visser</a>, we miss him dearly.</p>
-
+          <li>
+            <a rel="me" href="mailto:J.Smits-1@tudelft.nl" title="Email">
+                
+                    <span class="fas fa-envelope"></span>
+                
+                <span class="label">Email</span>
+            </a>
+          </li>
+        
+          <li>
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;Apanatshka" title="GitHub">
+                
+                    <span class="fab fa-github"></span>
+                
+                <span class="label">GitHub</span>
+            </a>
+          </li>
+        
+          <li>
+            <a rel="me" href="https:&#x2F;&#x2F;gitlab.com&#x2F;Apanatshka" title="GitLab">
+                
+                    <span class="fab fa-gitlab"></span>
+                
+                <span class="label">GitLab</span>
+            </a>
+          </li>
+        
+          <li>
+            <a rel="me" href="https:&#x2F;&#x2F;bitbucket.org&#x2F;Apanatshka" title="BitBucket">
+                
+                    <span class="fab fa-bitbucket"></span>
+                
+                <span class="label">BitBucket</span>
+            </a>
+          </li>
+        
+          <li>
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jeff-smits" title="LinkedIn">
+                
+                    <span class="fab fa-linkedin"></span>
+                
+                <span class="label">LinkedIn</span>
+            </a>
+          </li>
+        
+      </ul>
+    </nav>
+    <main>
+      <section>
+        <h1 id="jeff-smits">Jeff Smits</h1>
+<p>I am a Research Software Engineer at Delft University of Technology (TU Delft), where I currently help out in the <a href="http://pl.ewi.tudelft.nl/">Programming Languages Research Group</a> on the <a href="https://www.spoofax.dev/">Spoofax Language Workbench</a> and the <a href="https://alg.ewi.tudelft.nl/">Algorithmics Research Group</a> on the Pumpkin CP-SAT solver. I have a PhD in Computer Science from TU Delft.</p>
+<p>I have various research interests around language design and compiler technology. I’ve worked on declarative specification of data-flow analysis, practical incremental compilation for existing languages, and gradual types. I’ve designed FlowSpec, a domain-specific language for the specification of data-flow analysis. For incremental compilation I’ve taken apart the compiler of the Stratego term transformation language, and reassembled it as an incremental compiler. I’ve added a gradual type system to Stratego (which sounds a lot more final than it is in practice). I’ve also worked with Toine Hartman during his Master’s thesis project on optimising Stratego’s peculiar form of pattern matching. FlowSpec and Stratego are part of the <a href="https://www.spoofax.dev/">Spoofax Language Workbench</a>. I was formerly supervised by <a href="https://eelcovisser.org/">Eelco Visser</a>, we miss him dearly.</p>
 <h1 id="publications">Publications</h1>
-
 <h2 id="conference-articles">Conference articles</h2>
-
 <ul>
-  <li><strong>Jeff Smits</strong>, Toine Hartman, Jesper Cockx. Optimising First-Class Pattern Matching. In Bernd Fischer, Lola Burgueño, Walter Cazzola, editors, <em>Proceedings of the 15th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2022, Auckland, New Zealand, December 6-7, 2022</em>. pages 74–83, ACM, 2022. <a href="https://doi.org/10.1145/3567512.3567519">doi</a></li>
-  <li><strong>Jeff Smits</strong>, Eelco Visser. Gradually Typing Strategies. In <em>Proceedings of the 13th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2020, Virtual, USA, November 16-17, 2020</em>. ACM, 2020. <a href="/assets/articles/sle20-paper4.pdf">preprint</a> <a href="https://doi.org/10.1145/3426425.3426928">doi</a></li>
-  <li><strong>Jeff Smits</strong>, Eelco Visser. FlowSpec: declarative dataflow analysis specification. In Benoît Combemale, Marjan Mernik, Bernhard Rumpe, editors, <em>Proceedings of the 10th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2017, Vancouver, BC, Canada, October 23-24, 2017</em>. pages 221-231, ACM, 2017. <a href="https://doi.org/10.1145/3136014.3136029">doi</a></li>
+<li><strong>Jeff Smits</strong>, Toine Hartman, Jesper Cockx. Optimising First-Class Pattern Matching. In Bernd Fischer, Lola Burgueño, Walter Cazzola, editors, <em>Proceedings of the 15th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2022, Auckland, New Zealand, December 6-7, 2022</em>. pages 74–83, ACM, 2022. <a href="https://doi.org/10.1145/3567512.3567519">doi</a></li>
+<li><strong>Jeff Smits</strong>, Eelco Visser. Gradually Typing Strategies. In <em>Proceedings of the 13th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2020, Virtual, USA, November 16-17, 2020</em>. ACM, 2020. <a href="https://www.jeffsmits.net/articles/sle20-paper4.pdf">preprint</a> <a href="https://doi.org/10.1145/3426425.3426928">doi</a></li>
+<li><strong>Jeff Smits</strong>, Eelco Visser. FlowSpec: declarative dataflow analysis specification. In Benoît Combemale, Marjan Mernik, Bernhard Rumpe, editors, <em>Proceedings of the 10th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2017, Vancouver, BC, Canada, October 23-24, 2017</em>. pages 221-231, ACM, 2017. <a href="https://doi.org/10.1145/3136014.3136029">doi</a></li>
 </ul>
-
 <h2 id="journal-articles">Journal articles</h2>
-
 <ul>
-  <li><strong>Jeff Smits</strong>, Gabriël D.P. Konat, Eelco Visser. Constructing Hybrid Incremental Compilers for Cross-Module Extensibility with an Internal Build System. In <em>The Art, Science, and Engineering of Programming, 2020</em>. Vol. 4, Issue 3, Article 16. <a href="https://doi.org/10.22152/programming-journal.org/2020/4/16">doi</a></li>
-  <li><strong>Jeff Smits</strong>, Guido Wachsmuth, Eelco Visser. FlowSpec: A Declarative Specification Language for Intra-Procedural Flow-Sensitive Data-Flow Analysis. In: <em>Journal of Computer Language, 2020</em>. Vol. 57, April 2020, 100924. <a href="https://doi.org/10.1016/j.cola.2019.100924">doi</a></li>
+<li><strong>Jeff Smits</strong>, Gabriël D.P. Konat, Eelco Visser. Constructing Hybrid Incremental Compilers for Cross-Module Extensibility with an Internal Build System. In <em>The Art, Science, and Engineering of Programming, 2020</em>. Vol. 4, Issue 3, Article 16. <a href="https://doi.org/10.22152/programming-journal.org/2020/4/16">doi</a></li>
+<li><strong>Jeff Smits</strong>, Guido Wachsmuth, Eelco Visser. FlowSpec: A Declarative Specification Language for Intra-Procedural Flow-Sensitive Data-Flow Analysis. In: <em>Journal of Computer Language, 2020</em>. Vol. 57, April 2020, 100924. <a href="https://doi.org/10.1016/j.cola.2019.100924">doi</a></li>
 </ul>
-
 <h2 id="theses">Theses</h2>
-
 <ul>
-  <li><strong>Jeff Smits</strong>. Strategic Language Workbench Improvements. Doctoral thesis, Delft University of Technology, September 2023. In <em>IPA Dissertation Series</em>, Entry 2023-06. <a href="/assets/articles/digital-dissertation.pdf">pdf</a> <a href="https://doi.org/10.4233/uuid:25f6f514-a07d-4b78-8cc3-2769555a5c20">doi</a></li>
-  <li><strong>Jeff Smits</strong>. The Static Semantics of the Green-Marl Graph Analysis Language. Master’s thesis, Delft University of Technology, February 2016. <a href="http://resolver.tudelft.nl/uuid:4f07cbbb-d017-41e8-aba6-8ff0c19f258d">repository</a></li>
+<li><strong>Jeff Smits</strong>. Strategic Language Workbench Improvements. Doctoral thesis, Delft University of Technology, September 2023. In <em>IPA Dissertation Series</em>, Entry 2023-06. <a href="https://www.jeffsmits.net/articles/digital-dissertation.pdf">pdf</a> <a href="https://doi.org/10.4233/uuid:25f6f514-a07d-4b78-8cc3-2769555a5c20">doi</a></li>
+<li><strong>Jeff Smits</strong>. The Static Semantics of the Green-Marl Graph Analysis Language. Master's thesis, Delft University of Technology, February 2016. <a href="http://resolver.tudelft.nl/uuid:4f07cbbb-d017-41e8-aba6-8ff0c19f258d">repository</a></li>
 </ul>
 
-      </div>
-      <aside class="entry-sidebar">
-        
-
-        
-          <img class="author-picture" src="/assets/images/photo.jpg" alt="Jeff Smits">
-        
-      </aside>
-    </div>
-
-    <footer id="footer" class="site-footer">
-  <div class="copyright">
-    
-      <p>&copy; 2023 Jeff Smits.</p>
-    
-  </div>
-</footer>
-
-  </div>
-</main>
-
-        </div>
-
-        <div class="search-content">
-          <div class="inner">
-  
-</div>
-
-        </div>
-      </div>
-    </div>
-
-    
-
-<script async src="/assets/javascripts/main.js"></script>
-
-
-
-
+      </section>
+      <figure>
+        <img src="images/portrait.jpg" alt="Jeff Smits"/>
+      </figure>
+    </main>
   </body>
-
+  
 </html>

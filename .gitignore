@@ -1,8 +1,1 @@
-.jekyll-metadata
-.sass-cache/
-_site/
-_build/
-_includes/
-_bin/
-.bundle/
-Gemfile.lock
+public/

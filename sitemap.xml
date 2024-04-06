@@ -1,22 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url>
-<loc>http://www.jeffsmits.net//</loc>
-</url>
-<url>
-<loc>http://www.jeffsmits.net//assets/articles/digital-dissertation.pdf</loc>
-<lastmod>2023-08-16T17:50:42+02:00</lastmod>
-</url>
-<url>
-<loc>http://www.jeffsmits.net//assets/articles/sle20-paper4.pdf</loc>
-<lastmod>2023-08-16T17:50:42+02:00</lastmod>
-</url>
-<url>
-<loc>http://www.jeffsmits.net//assets/articles/splash18posters-paper3.pdf</loc>
-<lastmod>2023-08-16T17:50:42+02:00</lastmod>
-</url>
-<url>
-<loc>http://www.jeffsmits.net//assets/articles/stratego_ic19.pdf</loc>
-<lastmod>2023-08-16T17:50:42+02:00</lastmod>
-</url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://www.jeffsmits.net/</loc>
+    </url>
 </urlset>
