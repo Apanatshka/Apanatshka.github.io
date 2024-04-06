@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    <meta charset="utf-8">
+    <title>{{ section.title | safe }}</title>
+    <link rel="stylesheet" href="{{ get_url(path='main.css') }}" />
+    <link rel="stylesheet" href="{{ get_url(path='fontawesome/css/fontawesome.css') }}" />
+  </head>
+  
+  <body>
+    <nav class="sidebar">
+      <ul>
+        {% for link in config.extra.links %}
+          <li>
+            <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
+                {% if link.iconset %}
+                    <span class="{{ link.iconset }} {{ 'fa-' ~ link.icon }}"></span>
+                {% else %}
+                    <span class="fab {{ 'fa-' ~ link.icon }}"></span>
+                {% endif %}
+                <span class="label">{{ link.title }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </nav>
+    <main>
+      <section>
+        {{ section.content | safe }}
+      </section>
+      <figure>
+        <img src="images/portrait.jpg" alt="Jeff Smits"/>
+      </figure>
+    </main>
+  </body>
+  
+</html>
