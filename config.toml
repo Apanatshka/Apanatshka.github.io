@@ -16,7 +16,8 @@ highlight_code = false
 links = [
     { title = "Email", url = "mailto:J.Smits-1@tudelft.nl", iconset = "fas", icon = "envelope" },
     { title = "GitHub", url = "https://github.com/Apanatshka", icon = "github" },
-	{ title = "GitLab", url = "https://gitlab.com/Apanatshka", icon = "gitlab" },
-	{ title = "BitBucket", url = "https://bitbucket.org/Apanatshka", icon = "bitbucket" },
-	{ title = "LinkedIn", url = "https://www.linkedin.com/in/jeff-smits", icon = "linkedin" },
+    { title = "GitLab", url = "https://gitlab.com/Apanatshka", icon = "gitlab" },
+    { title = "BitBucket", url = "https://bitbucket.org/Apanatshka", icon = "bitbucket" },
+    { title = "LinkedIn", url = "https://www.linkedin.com/in/jeff-smits", icon = "linkedin" },
+    { title = "Personal Blog", url = "https://blog.jeffsmits.net/", iconset = "fas", icon = "blog" },
 ]
