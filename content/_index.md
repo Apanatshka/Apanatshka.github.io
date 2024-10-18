@@ -10,20 +10,37 @@ I have various research interests around language design and compiler technology
 
 # Publications
 
-## Conference articles
+## 2024
 
-- Maarten Flippo, Konstantin Sidorov, Imko Marijnissen, **Jeff Smits**, Emir Demirović. A Multi-Stage Proof Logging Framework to Certify the Correctness of CP Solvers. In *30th International Conference on Principles and Practice of Constraint Programming (CP 2024)*. Leibniz International Proceedings in Informatics (LIPIcs), Volume 307, pages 11:1-11:20. [doi](https://doi.org/10.4230/LIPIcs.CP.2024.11)
-- **Jeff Smits**, Toine Hartman, Jesper Cockx. Optimising First-Class Pattern Matching. In Bernd Fischer, Lola Burgueño, Walter Cazzola, editors, *Proceedings of the 15th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2022, Auckland, New Zealand, December 6-7, 2022*. pages 74–83, ACM, 2022. [doi](https://doi.org/10.1145/3567512.3567519)
-- **Jeff Smits**, Eelco Visser. Gradually Typing Strategies. In *Proceedings of the 13th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2020, Virtual, USA, November 16-17, 2020*. ACM, 2020. [preprint](articles/sle20-paper4.pdf) [doi](https://doi.org/10.1145/3426425.3426928)
-- **Jeff Smits**, Eelco Visser. FlowSpec: declarative dataflow analysis specification. In Benoît Combemale, Marjan Mernik, Bernhard Rumpe, editors, *Proceedings of the 10th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2017, Vancouver, BC, Canada, October 23-24, 2017*. pages 221-231, ACM, 2017. [doi](https://doi.org/10.1145/3136014.3136029)
+- **Jeff Smits**, Daniel A. A. Pelsmaeker. Ordering Rejectable Stacks in SGLR Parsing. Extended abstract. In *SPLASH 2024: Companion Proceedings of the 2024 ACM SIGPLAN International Conference on Systems, Programming, Languages, and Applications: Software for Humanity*. Pages 54–56. [doi](https://doi.org/10.1145/3689491.3691823)
+- Maarten Flippo, Konstantin Sidorov, Imko Marijnissen, **Jeff Smits**, Emir Demirović. Conference paper. A Multi-Stage Proof Logging Framework to Certify the Correctness of CP Solvers. In *30th International Conference on Principles and Practice of Constraint Programming (CP 2024)*. Leibniz International Proceedings in Informatics (LIPIcs), Volume 307, pages 11:1-11:20. [doi](https://doi.org/10.4230/LIPIcs.CP.2024.11)
 
-## Journal articles
-
-- **Jeff Smits**, Gabriël D.P. Konat, Eelco Visser. Constructing Hybrid Incremental Compilers for Cross-Module Extensibility with an Internal Build System. In *The Art, Science, and Engineering of Programming, 2020*. Vol. 4, Issue 3, Article 16. [doi](https://doi.org/10.22152/programming-journal.org/2020/4/16)
-- **Jeff Smits**, Guido Wachsmuth, Eelco Visser. FlowSpec: A Declarative Specification Language for Intra-Procedural Flow-Sensitive Data-Flow Analysis. In: *Journal of Computer Language, 2020*. Vol. 57, April 2020, 100924. [doi](https://doi.org/10.1016/j.cola.2019.100924)
-
-## Theses
-
+## 2023
 
 - **Jeff Smits**. Strategic Language Workbench Improvements. Doctoral thesis, Delft University of Technology, September 2023. In *IPA Dissertation Series*, Entry 2023-06. [pdf](articles/digital-dissertation.pdf) [doi](https://doi.org/10.4233/uuid:25f6f514-a07d-4b78-8cc3-2769555a5c20)
-- **Jeff Smits**. The Static Semantics of the Green-Marl Graph Analysis Language. Master's thesis, Delft University of Technology, February 2016. [repository](http://resolver.tudelft.nl/uuid:4f07cbbb-d017-41e8-aba6-8ff0c19f258d)
+
+## 2022
+
+- **Jeff Smits**, Toine Hartman, Jesper Cockx. Optimising First-Class Pattern Matching. Conference paper. In Bernd Fischer, Lola Burgueño, Walter Cazzola, editors, *Proceedings of the 15th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2022, Auckland, New Zealand, December 6-7, 2022*. pages 74–83, ACM, 2022. [doi](https://doi.org/10.1145/3567512.3567519)
+
+## 2020
+
+- **Jeff Smits**, Eelco Visser. Gradually Typing Strategies. Conference paper. In *Proceedings of the 13th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2020, Virtual, USA, November 16-17, 2020*. ACM, 2020. [preprint](articles/sle20-paper4.pdf) [doi](https://doi.org/10.1145/3426425.3426928)
+- **Jeff Smits**, Gabriël D.P. Konat, Eelco Visser. Constructing Hybrid Incremental Compilers for Cross-Module Extensibility with an Internal Build System. Journal article. In *The Art, Science, and Engineering of Programming, 2020*. Vol. 4, Issue 3, Article 16. [doi](https://doi.org/10.22152/programming-journal.org/2020/4/16)
+- **Jeff Smits**, Guido Wachsmuth, Eelco Visser. FlowSpec: A Declarative Specification Language for Intra-Procedural Flow-Sensitive Data-Flow Analysis. Journal article. In: *Journal of Computer Language, 2020*. Vol. 57, April 2020, 100924. [doi](https://doi.org/10.1016/j.cola.2019.100924)
+
+## 2017
+
+- **Jeff Smits**, Eelco Visser. FlowSpec: declarative dataflow analysis specification. Conference paper. In Benoît Combemale, Marjan Mernik, Bernhard Rumpe, editors, *Proceedings of the 10th ACM SIGPLAN International Conference on Software Language Engineering, SLE 2017, Vancouver, BC, Canada, October 23-24, 2017*. pages 221-231, ACM, 2017. [doi](https://doi.org/10.1145/3136014.3136029)
+
+## 2016
+
+- **Jeff Smits**. The Static Semantics of the Green-Marl Graph Analysis Language. Master's thesis, Delft University of Technology, February 2016. [repository](https://resolver.tudelft.nl/uuid:4f07cbbb-d017-41e8-aba6-8ff0c19f258d)
+
+## 2013
+
+- Marieke van der Tuin, A. Bastiaan Reijm, Tim K. de Jong and **Jeff Smits**. WebLab project. Bachelor’s thesis. Delft University of Technology, July 2013. [repository](https://resolver.tudelft.nl/uuid:bb2d7a13-1bef-4545-bca0-f2b084a04240)
+
+## 2011
+
+- Marc Dekker, Pieter Hameete, Michiel Hegemans, Sebastiaan Leysen, Joris van den Oever, **Jeff Smits** and Koen V. Hindriks (2011). HactarV2: An Agent Team Strategy Based on Implicit Coordination. Conference paper. In *Programming Multi-Agent Systems (ProMAS), Revised Selected Papers*. Volume 7217. Lecture Notes in Computer Science, pages 173–184. [doi](https://doi.org/10.1007/978-3-642-31915-0_10)
