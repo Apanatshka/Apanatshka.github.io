@@ -4,7 +4,7 @@ title = "Jeff Smits | Research Software Engineer @ TU Delft"
 
 # Jeff Smits
 
-I am a Research Software Engineer at Delft University of Technology (TU Delft), where I currently help out in the [Programming Languages Research Group](http://pl.ewi.tudelft.nl/) on the [Spoofax Language Workbench](https://www.spoofax.dev/) and the [Algorithmics Research Group](https://alg.ewi.tudelft.nl/) on the Pumpkin CP-SAT solver. I have a PhD in Computer Science from TU Delft.
+I am a Research Software Engineer at Delft University of Technology (TU Delft), where I currently help out in the [Programming Languages Research Group](http://pl.ewi.tudelft.nl/) on the [Spoofax Language Workbench](https://www.spoofax.dev/) and various other research projects that can use help. I have a PhD in Computer Science from TU Delft.
 
 I have various research interests around language design and compiler technology. I’ve worked on declarative specification of data-flow analysis, practical incremental compilation for existing languages, and gradual types. I’ve designed FlowSpec, a domain-specific language for the specification of data-flow analysis. For incremental compilation I’ve taken apart the compiler of the Stratego term transformation language, and reassembled it as an incremental compiler. I’ve added a gradual type system to Stratego (which sounds a lot more final than it is in practice). I’ve also worked with Toine Hartman during his Master’s thesis project on optimising Stratego’s peculiar form of pattern matching. FlowSpec and Stratego are part of the [Spoofax Language Workbench](https://www.spoofax.dev/). I was formerly supervised by [Eelco Visser](https://eelcovisser.org/), we miss him dearly.
 
