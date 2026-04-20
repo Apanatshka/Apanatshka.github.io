@@ -4,15 +4,17 @@ title = "Jeff Smits | Research Software Engineer @ TU Delft"
 
 # Jeff Smits
 
-I am a Research Software Engineer at Delft University of Technology (TU Delft), where I currently help out in the [Programming Languages Research Group](http://pl.ewi.tudelft.nl/) on the [Spoofax Language Workbench](https://www.spoofax.dev/) and various other research projects that can use help. I have a PhD in Computer Science from TU Delft.
+I am a [Research Software Engineer](https://reit.tudelft.nl/#/members/jeff) at Delft University of Technology (TU Delft), where I work on the [Spoofax Language Workbench](https://www.spoofax.dev/) and various other research projects that can use help. I have a PhD in Computer Science from TU Delft.
 
-I have various research interests around language design and compiler technology. I’ve worked on declarative specification of data-flow analysis, practical incremental compilation for existing languages, and gradual types. I’ve designed FlowSpec, a domain-specific language for the specification of data-flow analysis. For incremental compilation I’ve taken apart the compiler of the Stratego term transformation language, and reassembled it as an incremental compiler. I’ve added a gradual type system to Stratego (which sounds a lot more final than it is in practice). I’ve also worked with Toine Hartman during his Master’s thesis project on optimising Stratego’s peculiar form of pattern matching. FlowSpec and Stratego are part of the [Spoofax Language Workbench](https://www.spoofax.dev/). I was formerly supervised by [Eelco Visser](https://eelcovisser.org/), we miss him dearly.
+My research interests mostly revolve around language design and compiler technology. In particular, I am a proponent of declarative programming, and declarative definitions of programming language aspects. I am the current maintainer of the [Spoofax Language Workbench](https://www.spoofax.dev/).
+
+During my PhD and PostDoc, I worked on declarative specification of data-flow analysis, practical incremental compilation for existing languages, and gradual types. I’ve designed FlowSpec, a domain-specific language for the specification of data-flow analysis. For incremental compilation I’ve taken apart the compiler of the Stratego term transformation language, and reassembled it as an incremental compiler. I’ve added a gradual type system to Stratego (which sounds a lot more final than it is in practice). I’ve also worked with Toine Hartman during his Master’s thesis project on optimising Stratego’s peculiar form of pattern matching. FlowSpec and Stratego are part of Spoofax. I was formerly supervised by [Eelco Visser](https://eelcovisser.org/), we miss him dearly.
 
 # Conferences
 
 In the past you could find me every year at [SPLASH](https://splashcon.org/), in particular at the co-located [SLE](http://www.sleconf.org/) and/or [GPCE](https://conf.researchr.org/series/gpce) conferences. I was usually in a student volunteering shirt. I've also been to the [\<Programming\>](https://programming-journal.org/) conference, and some [smaller](https://conf.researchr.org/series/plnl) [Dutch](https://www.sen-symposium.nl/) conferences.
 
-In my current position I still strive to go to these conferences, but it is a bit harder to publish, so you won't find me there every year. For the [upcoming edition of SLE](https://conf.researchr.org/home/sle-2025) I will serve as a PC member. Considering [submitting your work there](https://conf.researchr.org/home/sle-2025#Call-for-Papers)!
+In my current position I still strive to go to these conferences, but it is a bit harder to publish, so you won't find me there every year. I was a PC member and co-chair of Artefact Evaluation at [SLE 2025](https://conf.researchr.org/home/sle-2025). I hope to keep SLE my usual conference, though it depends on various factors.
 
 # Publications
 
